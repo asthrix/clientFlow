@@ -7,6 +7,7 @@
 
 import { motion } from 'framer-motion';
 import { pageVariants } from '@/lib/animations';
+import { Sidebar, Header, MobileNav } from '@/components/layout';
 import { ConfirmDialog } from '@/components/shared';
 import type { ReactNode } from 'react';
 
@@ -17,26 +18,16 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar placeholder - will be implemented later */}
-      <aside className="hidden w-64 shrink-0 border-r border-border bg-card lg:block">
-        <div className="flex h-16 items-center gap-2 border-b border-border px-6">
-          <div className="h-8 w-8 rounded-lg bg-primary" />
-          <span className="text-lg font-bold text-foreground">ClientFlow</span>
-        </div>
-        <nav className="p-4">
-          <p className="text-sm text-muted-foreground">Sidebar coming soon...</p>
-        </nav>
-      </aside>
+      {/* Sidebar - Desktop */}
+      <Sidebar />
 
-      {/* Main content */}
+      {/* Mobile Navigation */}
+      <MobileNav />
+
+      {/* Main content area */}
       <div className="flex flex-1 flex-col">
-        {/* Header placeholder - will be implemented later */}
-        <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
-          <h1 className="text-lg font-semibold text-foreground">Dashboard</h1>
-          <div className="flex items-center gap-4">
-            <div className="h-8 w-8 rounded-full bg-muted" />
-          </div>
-        </header>
+        {/* Header */}
+        <Header />
 
         {/* Page content */}
         <motion.main
@@ -44,9 +35,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           initial="initial"
           animate="animate"
           exit="exit"
-          className="flex-1 overflow-auto p-6"
+          className="flex-1 overflow-auto p-4 lg:p-6"
         >
-          {children}
+          <div className="mx-auto max-w-7xl">
+            {children}
+          </div>
         </motion.main>
       </div>
 
