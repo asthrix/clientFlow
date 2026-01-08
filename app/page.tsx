@@ -1,5 +1,7 @@
-import { ComponentExample } from "@/components/component-example";
+import { redirect } from 'next/navigation';
 
-export default function Page() {
-return <ComponentExample />;
+export default function Home() {
+  // Redirect to dashboard or login based on auth status
+  // For now, redirect to dashboard (middleware will handle auth)
+  redirect('/dashboard');
 }
