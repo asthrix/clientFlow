@@ -3,3 +3,5 @@
 // ============================================
 
 export * from './clientService';
+export * from './projectService';
+
