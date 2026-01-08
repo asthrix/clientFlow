@@ -18,6 +18,7 @@ import {
   TrendingUp,
   TrendingDown,
   AlertCircle,
+  IndianRupee,
 } from 'lucide-react';
 
 interface StatsCardProps {
@@ -85,9 +86,9 @@ export function DashboardStats() {
   // Format currency
   const formatCurrency = (amount: number) => {
     if (amount >= 1000) {
-      return `$${(amount / 1000).toFixed(1)}k`;
+      return `₹${(amount / 1000).toFixed(1)}k`;
     }
-    return `$${amount.toFixed(0)}`;
+    return `₹${amount.toFixed(0)}`;
   };
 
   if (isLoading) {
@@ -136,7 +137,7 @@ export function DashboardStats() {
     {
       title: 'Revenue',
       value: formatCurrency(projectStats?.totalRevenue || 0),
-      icon: DollarSign,
+      icon: IndianRupee,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
     },

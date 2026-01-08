@@ -70,7 +70,7 @@ export type ClientFormData = z.infer<typeof clientSchema>;
 export type CreateClientFormData = z.infer<typeof createClientSchema>;
 export type UpdateClientFormData = z.infer<typeof updateClientSchema>;
 
-// Default values for form
+// Default values for form - India defaults
 export const defaultClientValues: ClientFormData = {
   client_name: '',
   email: '',
@@ -83,8 +83,8 @@ export const defaultClientValues: ClientFormData = {
   address_line1: '',
   address_line2: '',
   city: '',
-  state: '',
-  country: '',
+  state: 'Tamil Nadu',
+  country: 'India',
   postal_code: '',
   client_source: '',
   notes: '',

@@ -14,6 +14,7 @@ import {
   TrendingUp,
   Wallet,
   Clock,
+  IndianRupee,
 } from 'lucide-react';
 
 export function PaymentOverviewWidget() {
@@ -23,7 +24,7 @@ export function PaymentOverviewWidget() {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -45,7 +46,7 @@ export function PaymentOverviewWidget() {
       {/* Header */}
       <div className="flex items-center gap-2 border-b border-border px-6 py-4">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10">
-          <DollarSign className="h-4 w-4 text-green-500" />
+          <IndianRupee className="h-4 w-4 text-green-500" />
         </div>
         <h3 className="font-semibold text-foreground">Payment Overview</h3>
       </div>

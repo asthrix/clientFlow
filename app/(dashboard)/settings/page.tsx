@@ -161,10 +161,10 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <Label>Currency</Label>
                 <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                  <option value="INR">INR - Indian Rupee</option>
                   <option value="USD">USD - US Dollar</option>
                   <option value="EUR">EUR - Euro</option>
                   <option value="GBP">GBP - British Pound</option>
-                  <option value="INR">INR - Indian Rupee</option>
                 </select>
               </div>
             </div>

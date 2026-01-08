@@ -14,8 +14,8 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function formatCurrency(
   amount: number,
-  currency: string = 'USD',
-  locale: string = 'en-US'
+  currency: string = 'INR',
+  locale: string = 'en-IN'
 ): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
@@ -36,7 +36,7 @@ export function formatDate(
     day: 'numeric',
   }
 ): string {
-  return new Date(date).toLocaleDateString('en-US', options);
+  return new Date(date).toLocaleDateString('en-IN', options);
 }
 
 /**

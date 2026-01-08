@@ -13,7 +13,7 @@ import { useProjectStats } from '@/hooks/queries/useProjects';
 import { 
   TrendingUp, 
   TrendingDown,
-  DollarSign,
+  IndianRupee,
   Users,
   FolderKanban,
   CheckCircle2,
@@ -33,7 +33,7 @@ export default function AnalyticsPage() {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -89,7 +89,7 @@ export default function AnalyticsPage() {
           >
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-500/10">
-                <DollarSign className="h-6 w-6 text-green-500" />
+                <IndianRupee className="h-6 w-6 text-green-500" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Revenue</p>

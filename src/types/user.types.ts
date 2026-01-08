@@ -59,6 +59,7 @@ export interface UpdateNotificationSettingsDTO extends Partial<NotificationSetti
 export interface AuthUser {
   id: string;
   email: string;
+  fullName?: string;
   profile?: UserProfile;
 }
 

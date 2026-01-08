@@ -173,7 +173,7 @@ export async function createProject(
       delivery_status: projectData.delivery_status || 'not_started',
       payment_status: projectData.payment_status || 'unpaid',
       progress_percentage: projectData.progress_percentage || 0,
-      currency: projectData.currency || 'USD',
+      currency: projectData.currency || 'INR',
       payment_structure: projectData.payment_structure || 'fixed',
     })
     .select()

@@ -86,7 +86,7 @@ export const projectSchema = z.object({
   actual_completion_date: z.string().default(''),
 
   // Financial
-  currency: z.enum(currencyValues).default('USD'),
+  currency: z.enum(currencyValues).default('INR'),
   total_cost: z.coerce.number().min(0, 'Total cost must be positive').default(0),
   hourly_rate: z.coerce.number().min(0).default(0),
   estimated_hours: z.coerce.number().min(0).default(0),
@@ -130,7 +130,7 @@ export const defaultProjectValues: ProjectFormData = {
   start_date: '',
   expected_completion_date: '',
   actual_completion_date: '',
-  currency: 'USD',
+  currency: 'INR',
   total_cost: 0,
   hourly_rate: 0,
   estimated_hours: 0,
