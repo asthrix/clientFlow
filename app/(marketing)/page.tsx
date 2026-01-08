@@ -8,7 +8,7 @@ import {
   Footer,
 } from '@/components/landing';
 
-export default function Home() {
+export default function LandingPage() {
   return (
     <main className="min-h-screen">
       <LandingNavbar />
