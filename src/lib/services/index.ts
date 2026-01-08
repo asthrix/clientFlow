@@ -5,5 +5,7 @@
 export * from './clientService';
 export * from './projectService';
 export * from './credentialService';
+export * from './userService';
+
 
 

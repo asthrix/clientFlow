@@ -17,9 +17,14 @@ export interface UserProfile extends BaseEntity {
   phone?: string;
   avatar_url?: string;
   timezone?: string;
-  currency_preference: Currency;
+  currency_preference?: Currency;
   date_format?: string;
   theme?: 'light' | 'dark' | 'system';
+  // Notification preferences
+  notification_email?: boolean;
+  notification_payments?: boolean;
+  notification_renewals?: boolean;
+  notification_deadlines?: boolean;
 }
 
 // ============================================
@@ -48,6 +53,10 @@ export interface UpdateProfileDTO {
   currency_preference?: Currency;
   date_format?: string;
   theme?: 'light' | 'dark' | 'system';
+  notification_email?: boolean;
+  notification_payments?: boolean;
+  notification_renewals?: boolean;
+  notification_deadlines?: boolean;
 }
 
 export interface UpdateNotificationSettingsDTO extends Partial<NotificationSettings> {}

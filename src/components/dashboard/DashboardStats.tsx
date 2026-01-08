@@ -10,6 +10,7 @@ import { cardVariants } from '@/lib/animations';
 import { StatsCardSkeleton } from '@/components/shared';
 import { useClientStats } from '@/hooks/queries/useClients';
 import { useProjectStats } from '@/hooks/queries/useProjects';
+import { useCurrency } from '@/hooks';
 import { 
   Users, 
   FolderKanban, 
@@ -79,16 +80,23 @@ function StatsCard({ title, value, icon: Icon, color, bgColor, trend, change }: 
 export function DashboardStats() {
   const { data: clientStats, isLoading: clientsLoading, isError: clientsError } = useClientStats();
   const { data: projectStats, isLoading: projectsLoading, isError: projectsError } = useProjectStats();
+  const { formatCurrency, getCurrencySymbol, getCurrencyIcon } = useCurrency();
+  
+  const CurrencyIcon = getCurrencyIcon();
 
   const isLoading = clientsLoading || projectsLoading;
   const isError = clientsError || projectsError;
 
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    if (amount >= 1000) {
-      return `₹${(amount / 1000).toFixed(1)}k`;
+  // Format currency compactly for stats
+  const formatCompact = (amount: number) => {
+    const symbol = getCurrencySymbol();
+    if (amount >= 100000) {
+      return `${symbol}${(amount / 100000).toFixed(1)}L`;
     }
-    return `₹${amount.toFixed(0)}`;
+    if (amount >= 1000) {
+      return `${symbol}${(amount / 1000).toFixed(1)}k`;
+    }
+    return formatCurrency(amount);
   };
 
   if (isLoading) {
@@ -136,8 +144,8 @@ export function DashboardStats() {
     },
     {
       title: 'Revenue',
-      value: formatCurrency(projectStats?.totalRevenue || 0),
-      icon: IndianRupee,
+      value: formatCompact(projectStats?.totalRevenue || 0),
+      icon: CurrencyIcon,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
     },

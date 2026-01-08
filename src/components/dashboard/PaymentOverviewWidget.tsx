@@ -8,27 +8,19 @@
 import { motion } from 'framer-motion';
 import { fadeUpVariants } from '@/lib/animations';
 import { useProjectStats } from '@/hooks/queries/useProjects';
+import { useCurrency } from '@/hooks';
 import { 
   DollarSign, 
   AlertCircle,
   TrendingUp,
   Wallet,
   Clock,
-  IndianRupee,
 } from 'lucide-react';
 
 export function PaymentOverviewWidget() {
   const { data: stats, isLoading, isError } = useProjectStats();
-
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  const { formatCurrency, getCurrencyIcon } = useCurrency();
+  const CurrencyIcon = getCurrencyIcon();
 
   // Calculate collected amount
   const totalRevenue = stats?.totalRevenue || 0;
@@ -46,7 +38,7 @@ export function PaymentOverviewWidget() {
       {/* Header */}
       <div className="flex items-center gap-2 border-b border-border px-6 py-4">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10">
-          <IndianRupee className="h-4 w-4 text-green-500" />
+          <CurrencyIcon className="h-4 w-4 text-green-500" />
         </div>
         <h3 className="font-semibold text-foreground">Payment Overview</h3>
       </div>

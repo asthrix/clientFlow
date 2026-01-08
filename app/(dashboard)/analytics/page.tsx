@@ -10,10 +10,10 @@ import { staggerContainerVariants, fadeUpVariants, cardVariants } from '@/lib/an
 import { PageHeader, CardSkeleton } from '@/components/shared';
 import { useClientStats } from '@/hooks/queries/useClients';
 import { useProjectStats } from '@/hooks/queries/useProjects';
+import { useCurrency } from '@/hooks';
 import { 
   TrendingUp, 
   TrendingDown,
-  IndianRupee,
   Users,
   FolderKanban,
   CheckCircle2,
@@ -26,18 +26,10 @@ import {
 export default function AnalyticsPage() {
   const { data: clientStats, isLoading: clientsLoading } = useClientStats();
   const { data: projectStats, isLoading: projectsLoading } = useProjectStats();
+  const { formatCurrency, getCurrencyIcon } = useCurrency();
 
   const isLoading = clientsLoading || projectsLoading;
-
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  const CurrencyIcon = getCurrencyIcon();
 
   // Calculate derived stats
   const totalRevenue = projectStats?.totalRevenue || 0;
@@ -89,7 +81,7 @@ export default function AnalyticsPage() {
           >
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-500/10">
-                <IndianRupee className="h-6 w-6 text-green-500" />
+                <CurrencyIcon className="h-6 w-6 text-green-500" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
