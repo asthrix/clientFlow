@@ -4,4 +4,6 @@
 
 export * from './useClients';
 export * from './useProjects';
+export * from './useCredentials';
+
 

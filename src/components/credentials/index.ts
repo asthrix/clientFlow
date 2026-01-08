@@ -1,0 +1,7 @@
+// ============================================
+// ClientFlow CRM - Credentials Components Barrel Export
+// ============================================
+
+export { CredentialCard } from './CredentialCard';
+export { CredentialList } from './CredentialList';
+export { CredentialForm } from './CredentialForm';
