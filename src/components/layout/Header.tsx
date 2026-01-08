@@ -11,6 +11,7 @@ import { dropdownVariants, fadeUpVariants } from '@/lib/animations';
 import { useUIStore } from '@/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { GlobalSearch } from '@/components/shared';
 import { cn } from '@/lib/utils';
 import { 
   Search, 
@@ -52,14 +53,9 @@ export function Header() {
           <Menu className="h-5 w-5" />
         </Button>
 
-        {/* Search */}
-        <div className="relative hidden sm:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search clients, projects..."
-            className="h-9 w-64 bg-muted/50 pl-9 text-sm transition-all focus:w-80 focus:shadow-md focus:shadow-primary/10"
-          />
+        {/* Global Search - Command Palette */}
+        <div className="hidden sm:block">
+          <GlobalSearch />
         </div>
 
         {/* Mobile search toggle */}

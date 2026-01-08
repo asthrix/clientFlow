@@ -6,6 +6,7 @@ export { PageHeader } from './PageHeader';
 export { EmptyState } from './EmptyState';
 export { LoadingSpinner, LoadingDots } from './LoadingSpinner';
 export { ConfirmDialog } from './ConfirmDialog';
+export { GlobalSearch } from './GlobalSearch';
 export { 
   Skeleton,
   CardSkeleton,
@@ -23,3 +24,4 @@ export {
   PaymentStatusBadge, 
   ClientStatusBadge,
 } from './StatusBadge';
+
