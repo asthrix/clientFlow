@@ -32,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { DatePickerForm } from '@/components/ui/date-picker';
 import { useClients } from '@/hooks/queries/useClients';
 import type { Project } from '@/types';
 import { Loader2, AlertCircle } from 'lucide-react';
@@ -348,30 +349,51 @@ export function ProjectForm({
             {/* Start Date */}
             <div className="space-y-1.5">
               <Label htmlFor="start_date" className="text-sm">Start Date</Label>
-              <Input
-                id="start_date"
-                type="date"
-                {...register('start_date')}
+              <Controller
+                control={control}
+                name="start_date"
+                render={({ field }) => (
+                  <DatePickerForm
+                    id="start_date"
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Select start date"
+                  />
+                )}
               />
             </div>
 
             {/* Expected Completion */}
             <div className="space-y-1.5">
               <Label htmlFor="expected_completion_date" className="text-sm">Expected End</Label>
-              <Input
-                id="expected_completion_date"
-                type="date"
-                {...register('expected_completion_date')}
+              <Controller
+                control={control}
+                name="expected_completion_date"
+                render={({ field }) => (
+                  <DatePickerForm
+                    id="expected_completion_date"
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Select expected end"
+                  />
+                )}
               />
             </div>
 
             {/* Actual Completion */}
             <div className="space-y-1.5">
               <Label htmlFor="actual_completion_date" className="text-sm">Actual End</Label>
-              <Input
-                id="actual_completion_date"
-                type="date"
-                {...register('actual_completion_date')}
+              <Controller
+                control={control}
+                name="actual_completion_date"
+                render={({ field }) => (
+                  <DatePickerForm
+                    id="actual_completion_date"
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Select actual end"
+                  />
+                )}
               />
             </div>
           </div>

@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { DatePickerForm } from '@/components/ui/date-picker';
 import { useClients } from '@/hooks/queries/useClients';
 import { useCreateClient } from '@/hooks/mutations/useClientMutations';
 import { useCreateProject } from '@/hooks/mutations/useProjectMutations';
@@ -550,34 +551,22 @@ export function UnifiedProjectWizard({
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="start_date">Start Date</Label>
-                      <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          id="start_date"
-                          type="date"
-                          className="pl-10"
-                          value={project.start_date}
-                          onChange={(e) =>
-                            setProject({ ...project, start_date: e.target.value })
-                          }
-                        />
-                      </div>
+                      <DatePickerForm
+                        id="start_date"
+                        value={project.start_date}
+                        onChange={(value) => setProject({ ...project, start_date: value })}
+                        placeholder="Select start date"
+                      />
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="completion_date">Expected Completion</Label>
-                      <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          id="completion_date"
-                          type="date"
-                          className="pl-10"
-                          value={project.expected_completion_date}
-                          onChange={(e) =>
-                            setProject({ ...project, expected_completion_date: e.target.value })
-                          }
-                        />
-                      </div>
+                      <DatePickerForm
+                        id="completion_date"
+                        value={project.expected_completion_date}
+                        onChange={(value) => setProject({ ...project, expected_completion_date: value })}
+                        placeholder="Select completion date"
+                      />
                     </div>
                   </div>
 

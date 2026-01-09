@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { DatePickerForm } from '@/components/ui/date-picker';
 import { useProjects } from '@/hooks/queries/useProjects';
 import type { Credential, CredentialType } from '@/types';
 import {
@@ -311,15 +312,18 @@ export function CredentialForm({
 
         <div className="space-y-2">
           <Label htmlFor="expiry_date">Expiry Date</Label>
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              id="expiry_date"
-              type="date"
-              className="pl-10"
-              {...register('expiry_date')}
-            />
-          </div>
+          <Controller
+            control={control}
+            name="expiry_date"
+            render={({ field }) => (
+              <DatePickerForm
+                id="expiry_date"
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Select expiry date"
+              />
+            )}
+          />
           <p className="text-xs text-muted-foreground">
             You&apos;ll be notified when credentials are expiring
           </p>

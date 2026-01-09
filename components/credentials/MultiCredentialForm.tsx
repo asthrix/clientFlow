@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { DatePickerForm } from '@/components/ui/date-picker';
 import { useCreateMultipleCredentials } from '@/hooks/mutations/useCreateMultipleCredentials';
 import type { CredentialType } from '@/types';
 import {
@@ -362,16 +363,12 @@ export function MultiCredentialForm({
 
                   <div className="space-y-2">
                     <Label htmlFor={`expiry_${entry.id}`}>Expiry Date</Label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id={`expiry_${entry.id}`}
-                        type="date"
-                        className="pl-10"
-                        value={entry.expiry_date}
-                        onChange={(e) => updateEntry(entry.id, 'expiry_date', e.target.value)}
-                      />
-                    </div>
+                    <DatePickerForm
+                      id={`expiry_${entry.id}`}
+                      value={entry.expiry_date}
+                      onChange={(value) => updateEntry(entry.id, 'expiry_date', value)}
+                      placeholder="Select expiry date"
+                    />
                   </div>
                 </div>
               </div>
