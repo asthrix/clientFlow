@@ -165,28 +165,28 @@ export default function ClientDetailPage() {
       </Link>
 
       {/* Header Card */}
-      <motion.div variants={fadeUpVariants} className="rounded-xl border border-border bg-card p-6">
-        <div className="flex items-start justify-between">
+      <motion.div variants={fadeUpVariants} className="rounded-xl border border-border bg-card p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex items-center gap-4">
             {/* Avatar */}
-            <div className={`flex h-14 w-14 items-center justify-center rounded-full text-white text-xl font-semibold ${getAvatarColor(client.client_name)}`}>
+            <div className={`flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full text-white text-lg sm:text-xl font-semibold shrink-0 ${getAvatarColor(client.client_name)}`}>
               {getInitials(client.client_name)}
             </div>
             
             {/* Name & Contact */}
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">{client.client_name}</h1>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">{client.client_name}</h1>
               {client.company_name && (
-                <p className="text-muted-foreground">{client.company_name}</p>
+                <p className="text-muted-foreground text-sm sm:text-base truncate">{client.company_name}</p>
               )}
-              <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                <a href={`mailto:${client.email}`} className="flex items-center gap-1.5 hover:text-primary transition-colors">
-                  <Mail className="h-4 w-4" />
-                  {client.email}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
+                <a href={`mailto:${client.email}`} className="flex items-center gap-1.5 hover:text-primary transition-colors truncate max-w-[200px] sm:max-w-none">
+                  <Mail className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{client.email}</span>
                 </a>
                 {client.phone && (
                   <a href={`tel:${client.phone}`} className="flex items-center gap-1.5 hover:text-primary transition-colors">
-                    <Phone className="h-4 w-4" />
+                    <Phone className="h-4 w-4 shrink-0" />
                     {client.phone}
                   </a>
                 )}
@@ -195,7 +195,7 @@ export default function ClientDetailPage() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <Button variant="outline" size="sm" onClick={() => setEditModalOpen(true)}>
               <Pencil className="mr-2 h-4 w-4" />
               Edit
@@ -212,18 +212,18 @@ export default function ClientDetailPage() {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-3 gap-6 mt-6 pt-6 border-t border-border">
-          <div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-6 pt-6 border-t border-border">
+          <div className="flex sm:block items-center justify-between">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Client Since</p>
-            <p className="text-lg font-semibold text-foreground mt-1">{formatDate(client.created_at)}</p>
+            <p className="text-base sm:text-lg font-semibold text-foreground sm:mt-1">{formatDate(client.created_at)}</p>
           </div>
-          <div>
+          <div className="flex sm:block items-center justify-between">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Projects</p>
-            <p className="text-lg font-semibold text-primary mt-1">{totals.projectCount}</p>
+            <p className="text-base sm:text-lg font-semibold text-primary sm:mt-1">{totals.projectCount}</p>
           </div>
-          <div>
+          <div className="flex sm:block items-center justify-between">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Spend</p>
-            <p className="text-lg font-semibold text-emerald-500 mt-1">{formatCurrency(totals.totalSpend)}</p>
+            <p className="text-base sm:text-lg font-semibold text-emerald-500 sm:mt-1">{formatCurrency(totals.totalSpend)}</p>
           </div>
         </div>
       </motion.div>

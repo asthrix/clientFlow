@@ -201,8 +201,8 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
   return (
     <div className="space-y-6">
       {/* Header with Search & Add */}
-      <div className="flex items-center justify-between">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+        <div className="relative flex-1 sm:max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search clients..."
@@ -211,7 +211,7 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
             className="pl-9"
           />
         </div>
-        <Button onClick={onAddClient}>
+        <Button onClick={onAddClient} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Add Client
         </Button>
@@ -222,19 +222,19 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
         variants={fadeUpVariants}
         initial="initial"
         animate="animate"
-        className="grid grid-cols-3 gap-4"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"
       >
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="rounded-xl border border-border bg-card p-3 sm:p-4 flex sm:block items-center justify-between">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Clients</p>
-          <p className="text-2xl font-bold text-foreground mt-1">{summaryStats.totalClients}</p>
+          <p className="text-xl sm:text-2xl font-bold text-foreground sm:mt-1">{summaryStats.totalClients}</p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="rounded-xl border border-border bg-card p-3 sm:p-4 flex sm:block items-center justify-between">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Projects</p>
-          <p className="text-2xl font-bold text-primary mt-1">{summaryStats.totalProjects}</p>
+          <p className="text-xl sm:text-2xl font-bold text-primary sm:mt-1">{summaryStats.totalProjects}</p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="rounded-xl border border-border bg-card p-3 sm:p-4 flex sm:block items-center justify-between">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Revenue</p>
-          <p className="text-2xl font-bold text-emerald-500 mt-1">{formatCurrency(summaryStats.totalRevenue)}</p>
+          <p className="text-xl sm:text-2xl font-bold text-emerald-500 sm:mt-1">{formatCurrency(summaryStats.totalRevenue)}</p>
         </div>
       </motion.div>
 
@@ -245,8 +245,8 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
         animate="animate"
         className="rounded-xl border border-border bg-card overflow-hidden"
       >
-        {/* Table Header */}
-        <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-muted/50 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border">
+        {/* Table Header - Hidden on mobile */}
+        <div className="hidden sm:grid grid-cols-12 gap-4 px-4 py-3 bg-muted/50 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border">
           <div className="col-span-5">Client</div>
           <div className="col-span-3 text-center">Projects</div>
           <div className="col-span-4 text-right">Total Spend</div>
@@ -266,32 +266,47 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
               <Link
                 key={client.id}
                 href={`/clients/${client.id}`}
-                className="grid grid-cols-12 gap-4 px-4 py-4 items-center hover:bg-muted/50 transition-colors"
+                className="block sm:grid sm:grid-cols-12 sm:gap-4 px-4 py-4 sm:items-center hover:bg-muted/50 transition-colors"
               >
                 {/* Client Info */}
-                <div className="col-span-5 flex items-center gap-3">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-full text-white text-sm font-semibold ${getAvatarColor(client.client_name)}`}>
+                <div className="sm:col-span-5 flex items-center gap-3">
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white text-sm font-semibold ${getAvatarColor(client.client_name)}`}>
                     {getInitials(client.client_name)}
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="font-medium text-foreground truncate">{client.client_name}</p>
                     <p className="text-sm text-muted-foreground truncate">{client.email}</p>
                     {client.company_name && (
-                      <p className="text-xs text-muted-foreground truncate">{client.company_name}</p>
+                      <p className="text-xs text-muted-foreground truncate hidden sm:block">{client.company_name}</p>
                     )}
                   </div>
                 </div>
 
-                {/* Projects Count */}
-                <div className="col-span-3 text-center">
+                {/* Mobile: Projects & Spend inline */}
+                <div className="flex items-center justify-between mt-2 sm:hidden text-sm">
+                  <span className="text-muted-foreground">
+                    <span className="font-semibold text-primary">{client.project_count || 0}</span>
+                    {' '}project{(client.project_count || 0) !== 1 ? 's' : ''}
+                  </span>
+                  {(client.total_revenue || 0) > 0 ? (
+                    <span className="font-semibold text-emerald-500">
+                      {formatCurrency(client.total_revenue || 0)}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">$0</span>
+                  )}
+                </div>
+
+                {/* Desktop: Projects Count */}
+                <div className="hidden sm:block col-span-3 text-center">
                   <span className="text-sm text-foreground">
                     <span className="font-semibold text-primary">{client.project_count || 0}</span>
                     {' '}project{(client.project_count || 0) !== 1 ? 's' : ''}
                   </span>
                 </div>
 
-                {/* Total Spend */}
-                <div className="col-span-4 text-right">
+                {/* Desktop: Total Spend */}
+                <div className="hidden sm:block col-span-4 text-right">
                   {(client.total_revenue || 0) > 0 ? (
                     <span className="font-semibold text-emerald-500">
                       {formatCurrency(client.total_revenue || 0)}

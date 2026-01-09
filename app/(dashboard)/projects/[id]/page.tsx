@@ -172,45 +172,47 @@ export default function ProjectDetailPage() {
       className="space-y-6"
     >
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-4">
-          <Button variant="ghost" size="icon" asChild className="mt-1">
-            <Link href="/projects">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{project.project_name}</h1>
-            <div className="flex items-center gap-3 mt-1">
-              {project.client_name && (
-                <Link 
-                  href={`/clients/${project.client_id}`}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
-                >
-                  <User className="h-3 w-3" />
-                  {project.client_name}
-                </Link>
-              )}
-              <span className="text-sm text-muted-foreground capitalize">
-                {project.project_type?.replace('_', ' ')}
-              </span>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <Button variant="ghost" size="icon" asChild className="mt-0.5 shrink-0">
+              <Link href="/projects">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground leading-tight">{project.project_name}</h1>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                {project.client_name && (
+                  <Link 
+                    href={`/clients/${project.client_id}`}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+                  >
+                    <User className="h-3 w-3" />
+                    {project.client_name}
+                  </Link>
+                )}
+                <span className="text-sm text-muted-foreground capitalize">
+                  {project.project_type?.replace('_', ' ')}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setEditModalOpen(true)}>
-            <Pencil className="mr-2 h-4 w-4" />
-            Edit
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            className="text-destructive hover:text-destructive"
-            onClick={() => setDeleteDialogOpen(true)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2 pl-10 sm:pl-0">
+            <Button variant="outline" size="sm" onClick={() => setEditModalOpen(true)}>
+              <Pencil className="sm:mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Edit</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -220,31 +222,31 @@ export default function ProjectDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Status Overview Card */}
           <motion.div variants={fadeUpVariants}>
-            <div className="rounded-xl border border-border bg-card p-5">
-              <div className="flex flex-wrap gap-6">
+            <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-4 sm:gap-6">
                 {/* Status */}
-                <div className="flex-1 min-w-[120px]">
+                <div className="min-w-0">
                   <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5">Status</p>
                   <StatusBadge variant={currentStatus.variant}>
                     {currentStatus.label}
                   </StatusBadge>
                 </div>
                 {/* Delivery */}
-                <div className="flex-1 min-w-[120px]">
+                <div className="min-w-0">
                   <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5">Delivery</p>
                   <StatusBadge variant={currentDelivery.variant}>
                     {currentDelivery.label}
                   </StatusBadge>
                 </div>
                 {/* Payment */}
-                <div className="flex-1 min-w-[120px]">
+                <div className="min-w-0">
                   <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5">Payment</p>
                   <StatusBadge variant={currentPayment.variant}>
                     {currentPayment.label}
                   </StatusBadge>
                 </div>
                 {/* Progress */}
-                <div className="flex-1 min-w-[120px]">
+                <div className="min-w-0 col-span-2 sm:col-span-1 sm:flex-1 sm:min-w-[140px]">
                   <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5">Progress</p>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
@@ -299,20 +301,20 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Right Column - Sticky Sidebar */}
-        <div className="lg:sticky lg:top-20 lg:self-start space-y-5">
+        <div className="lg:sticky lg:top-20 lg:self-start space-y-4 sm:space-y-5">
           {/* Financial Summary */}
           <motion.div variants={fadeUpVariants}>
-            <div className="rounded-xl border border-border bg-card p-5">
-              <div className="flex items-center gap-2 mb-4">
+            <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
                 <h2 className="font-semibold text-foreground">Financial</h2>
               </div>
               
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {/* Total Value */}
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Total Value</p>
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className="text-xl sm:text-2xl font-bold text-foreground">
                     {formatCurrency(project.total_cost, project.currency)}
                   </p>
                 </div>

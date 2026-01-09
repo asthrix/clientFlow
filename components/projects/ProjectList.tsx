@@ -278,23 +278,23 @@ export function ProjectList({ onAddProject, onEditProject, clientId }: ProjectLi
           variants={fadeUpVariants}
           initial="initial"
           animate="animate"
-          className="flex items-center justify-between pt-4"
+          className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4"
         >
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground order-2 sm:order-1">
             Showing {(page - 1) * 12 + 1} to {Math.min(page * 12, total)} of {total} projects
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 order-1 sm:order-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
             >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
+              <ChevronLeft className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Previous</span>
             </Button>
-            <span className="text-sm text-muted-foreground">
-              Page {page} of {totalPages}
+            <span className="text-sm text-muted-foreground px-2">
+              {page} / {totalPages}
             </span>
             <Button
               variant="outline"
@@ -302,8 +302,8 @@ export function ProjectList({ onAddProject, onEditProject, clientId }: ProjectLi
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
             >
-              Next
-              <ChevronRight className="h-4 w-4" />
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight className="h-4 w-4 sm:ml-1" />
             </Button>
           </div>
         </motion.div>
@@ -416,8 +416,8 @@ function ListHeader({
   return (
     <div className="space-y-4">
       {/* Top row: Search and Add button */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 sm:max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search projects..."
@@ -426,8 +426,8 @@ function ListHeader({
             className="pl-9"
           />
         </div>
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button onClick={onAddProject}>
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full sm:w-auto">
+          <Button onClick={onAddProject} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             Add Project
           </Button>
@@ -453,7 +453,7 @@ function ListHeader({
         </div>
 
         {/* Right side controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <select
             value={sortField}
             onChange={(e) => onSort(e.target.value as ProjectSortField)}
@@ -479,7 +479,7 @@ function ListHeader({
             )}
           </Button>
 
-          <div className="flex rounded-md border border-input">
+          <div className="hidden sm:flex rounded-md border border-input">
             <Button
               variant={viewMode === 'grid' ? 'default' : 'ghost'}
               size="sm"
@@ -499,7 +499,7 @@ function ListHeader({
           </div>
 
           {totalCount !== undefined && (
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-muted-foreground hidden sm:inline">
               {totalCount} project{totalCount !== 1 ? 's' : ''}
             </span>
           )}
