@@ -70,7 +70,7 @@ interface MilestoneTrackerProps {
 
 export function MilestoneTracker({ projectId, projectType = 'website' }: MilestoneTrackerProps) {
   const [isCardExpanded, setIsCardExpanded] = useState(false);
-  const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(new Set());
+  const [openMilestoneId, setOpenMilestoneId] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<ProjectType>(projectType);
   const [isInitializing, setIsInitializing] = useState(false);
   
@@ -108,17 +108,9 @@ export function MilestoneTracker({ projectId, projectType = 'website' }: Milesto
     }
   };
 
-  // Toggle milestone expansion
+  // Toggle milestone expansion (auto-close previous)
   const toggleExpanded = (milestoneId: string) => {
-    setExpandedMilestones((prev) => {
-      const next = new Set(prev);
-      if (next.has(milestoneId)) {
-        next.delete(milestoneId);
-      } else {
-        next.add(milestoneId);
-      }
-      return next;
-    });
+    setOpenMilestoneId(openMilestoneId === milestoneId ? null : milestoneId);
   };
 
   // Toggle milestone completion
@@ -274,7 +266,7 @@ export function MilestoneTracker({ projectId, projectType = 'website' }: Milesto
             <div className="divide-y divide-border">
               {applicableMilestones.map((milestone) => {
                 const Icon = MilestoneIconComponents[milestone.milestone_type as MilestoneType] || Rocket;
-                const isExpanded = expandedMilestones.has(milestone.id);
+                const isExpanded = openMilestoneId === milestone.id;
                 const subTaskDefs = MilestoneSubTasks[milestone.milestone_type as MilestoneType] || [];
 
                 return (
