@@ -2,13 +2,13 @@
 
 // ============================================
 // ClientFlow CRM - Client List Component
-// Displays paginated list of clients with search/filter
+// Table-style list with summary stats
 // ============================================
 
 import { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { staggerContainerVariants, fadeUpVariants, modalVariants, overlayVariants } from '@/lib/animations';
-import { ClientCard } from './ClientCard';
+import { fadeUpVariants, modalVariants, overlayVariants } from '@/lib/animations';
+import Link from 'next/link';
 import { 
   EmptyState, 
   CardSkeleton,
@@ -22,34 +22,28 @@ import type { Client, ClientFilters, ClientSortField, SortOrder, ClientStatus, C
 import {
   Search,
   Plus,
-  SortAsc,
-  SortDesc,
-  Grid3X3,
-  List,
   Users,
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
   Loader2,
-  X,
+  FolderKanban,
+  DollarSign,
 } from 'lucide-react';
 
 interface ClientListProps {
-  /** Callback when add client is clicked */
   onAddClient: () => void;
-  /** Callback when edit client is clicked */
   onEditClient: (client: Client) => void;
 }
 
 export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
-  // State for search, filters, and pagination
+  // State for search and pagination
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ClientStatus[]>([]);
   const [typeFilter, setTypeFilter] = useState<ClientType[]>([]);
   const [sortField, setSortField] = useState<ClientSortField>('created_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [page, setPage] = useState(1);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Debounce search query
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -72,7 +66,7 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
     filters,
     sort: { field: sortField, order: sortOrder },
     page,
-    pageSize: 12,
+    pageSize: 20,
   });
 
   // Mutations
@@ -82,6 +76,15 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
   // Dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+
+  // Calculate summary stats
+  const summaryStats = useMemo(() => {
+    const clients = clientsData?.data || [];
+    const totalClients = clientsData?.total || 0;
+    const totalProjects = clients.reduce((sum, c) => sum + (c.project_count || 0), 0);
+    const totalRevenue = clients.reduce((sum, c) => sum + (c.total_revenue || 0), 0);
+    return { totalClients, totalProjects, totalRevenue };
+  }, [clientsData]);
 
   // Handlers
   const handleDelete = useCallback((client: Client) => {
@@ -102,28 +105,6 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
     setClientToDelete(null);
   }, []);
 
-  const handleArchive = useCallback(async (client: Client) => {
-    await archiveClient.mutateAsync(client.id);
-  }, [archiveClient]);
-
-  const handleSort = useCallback((field: ClientSortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('desc');
-    }
-  }, [sortField, sortOrder]);
-
-  const toggleStatusFilter = useCallback((status: ClientStatus) => {
-    setStatusFilter(prev => 
-      prev.includes(status) 
-        ? prev.filter(s => s !== status)
-        : [...prev, status]
-    );
-    setPage(1);
-  }, []);
-
   const clearFilters = useCallback(() => {
     setSearchQuery('');
     setStatusFilter([]);
@@ -131,27 +112,41 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
     setPage(1);
   }, []);
 
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    if (amount === 0) return '$0';
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // Get initials
+  const getInitials = (name: string) => {
+    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  // Generate avatar color
+  const getAvatarColor = (name: string) => {
+    const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-amber-500', 'bg-rose-500'];
+    return colors[name.charCodeAt(0) % colors.length];
+  };
+
   // Render loading state
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <ListHeader
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onAddClient={onAddClient}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          sortField={sortField}
-          sortOrder={sortOrder}
-          onSort={handleSort}
-          statusFilter={statusFilter}
-          onToggleStatusFilter={toggleStatusFilter}
-        />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {[...Array(8)].map((_, i) => (
-            <CardSkeleton key={i} />
+        <div className="flex items-center justify-between">
+          <div className="h-10 w-64 bg-muted rounded animate-pulse" />
+          <div className="h-10 w-32 bg-muted rounded animate-pulse" />
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <CardSkeleton key={i} className="h-20" />
           ))}
         </div>
+        <CardSkeleton className="h-64" />
       </div>
     );
   }
@@ -159,27 +154,13 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
   // Render error state
   if (isError) {
     return (
-      <div className="space-y-6">
-        <ListHeader
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onAddClient={onAddClient}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          sortField={sortField}
-          sortOrder={sortOrder}
-          onSort={handleSort}
-          statusFilter={statusFilter}
-          onToggleStatusFilter={toggleStatusFilter}
-        />
-        <EmptyState
-          title="Failed to load clients"
-          description={error?.message || 'An error occurred while loading clients.'}
-          icon={Users}
-          actionLabel="Try again"
-          onAction={() => refetch()}
-        />
-      </div>
+      <EmptyState
+        title="Failed to load clients"
+        description={error?.message || 'An error occurred while loading clients.'}
+        icon={Users}
+        actionLabel="Try again"
+        onAction={() => refetch()}
+      />
     );
   }
 
@@ -191,21 +172,24 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
   if (clients.length === 0 && !debouncedSearch && statusFilter.length === 0) {
     return (
       <div className="space-y-6">
-        <ListHeader
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onAddClient={onAddClient}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          sortField={sortField}
-          sortOrder={sortOrder}
-          onSort={handleSort}
-          statusFilter={statusFilter}
-          onToggleStatusFilter={toggleStatusFilter}
-        />
+        <div className="flex items-center justify-between">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search clients..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Button onClick={onAddClient}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Client
+          </Button>
+        </div>
         <EmptyState
           title="No clients yet"
-          description="Start by adding your first client to manage their projects and information."
+          description="Start by adding your first client to manage their projects."
           icon={Users}
           actionLabel="Add Your First Client"
           onAction={onAddClient}
@@ -214,69 +198,119 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
     );
   }
 
-  // Render no search results
-  if (clients.length === 0) {
-    return (
-      <div className="space-y-6">
-        <ListHeader
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onAddClient={onAddClient}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          sortField={sortField}
-          sortOrder={sortOrder}
-          onSort={handleSort}
-          statusFilter={statusFilter}
-          onToggleStatusFilter={toggleStatusFilter}
-        />
-        <EmptyState
-          title="No clients found"
-          description="Try adjusting your search or filter criteria."
-          icon={Search}
-          actionLabel="Clear filters"
-          onAction={clearFilters}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <ListHeader
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onAddClient={onAddClient}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        sortField={sortField}
-        sortOrder={sortOrder}
-        onSort={handleSort}
-        statusFilter={statusFilter}
-        onToggleStatusFilter={toggleStatusFilter}
-        totalCount={total}
-      />
+      {/* Header with Search & Add */}
+      <div className="flex items-center justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search clients..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Button onClick={onAddClient}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Client
+        </Button>
+      </div>
 
-      {/* Client Grid */}
+      {/* Summary Stats */}
       <motion.div
-        variants={staggerContainerVariants}
+        variants={fadeUpVariants}
         initial="initial"
         animate="animate"
-        className={
-          viewMode === 'grid'
-            ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-            : 'space-y-3'
-        }
+        className="grid grid-cols-3 gap-4"
       >
-        {clients.map((client) => (
-          <ClientCard
-            key={client.id}
-            client={client}
-            onEdit={onEditClient}
-            onDelete={handleDelete}
-            onArchive={handleArchive}
-          />
-        ))}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Clients</p>
+          <p className="text-2xl font-bold text-foreground mt-1">{summaryStats.totalClients}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Projects</p>
+          <p className="text-2xl font-bold text-primary mt-1">{summaryStats.totalProjects}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Revenue</p>
+          <p className="text-2xl font-bold text-emerald-500 mt-1">{formatCurrency(summaryStats.totalRevenue)}</p>
+        </div>
+      </motion.div>
+
+      {/* Client Table */}
+      <motion.div
+        variants={fadeUpVariants}
+        initial="initial"
+        animate="animate"
+        className="rounded-xl border border-border bg-card overflow-hidden"
+      >
+        {/* Table Header */}
+        <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-muted/50 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border">
+          <div className="col-span-5">Client</div>
+          <div className="col-span-3 text-center">Projects</div>
+          <div className="col-span-4 text-right">Total Spend</div>
+        </div>
+
+        {/* Table Rows */}
+        <div className="divide-y divide-border">
+          {clients.length === 0 ? (
+            <div className="p-8 text-center">
+              <p className="text-sm text-muted-foreground">No clients found. Try adjusting your search.</p>
+              <Button variant="outline" size="sm" className="mt-3" onClick={clearFilters}>
+                Clear filters
+              </Button>
+            </div>
+          ) : (
+            clients.map((client) => (
+              <Link
+                key={client.id}
+                href={`/clients/${client.id}`}
+                className="grid grid-cols-12 gap-4 px-4 py-4 items-center hover:bg-muted/50 transition-colors"
+              >
+                {/* Client Info */}
+                <div className="col-span-5 flex items-center gap-3">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full text-white text-sm font-semibold ${getAvatarColor(client.client_name)}`}>
+                    {getInitials(client.client_name)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-foreground truncate">{client.client_name}</p>
+                    <p className="text-sm text-muted-foreground truncate">{client.email}</p>
+                    {client.company_name && (
+                      <p className="text-xs text-muted-foreground truncate">{client.company_name}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Projects Count */}
+                <div className="col-span-3 text-center">
+                  <span className="text-sm text-foreground">
+                    <span className="font-semibold text-primary">{client.project_count || 0}</span>
+                    {' '}project{(client.project_count || 0) !== 1 ? 's' : ''}
+                  </span>
+                </div>
+
+                {/* Total Spend */}
+                <div className="col-span-4 text-right">
+                  {(client.total_revenue || 0) > 0 ? (
+                    <span className="font-semibold text-emerald-500">
+                      {formatCurrency(client.total_revenue || 0)}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">$0</span>
+                  )}
+                </div>
+              </Link>
+            ))
+          )}
+        </div>
+
+        {/* Footer with count */}
+        <div className="px-4 py-3 border-t border-border bg-muted/30">
+          <p className="text-sm text-muted-foreground">
+            Showing {clients.length} client{clients.length !== 1 ? 's' : ''}
+          </p>
+        </div>
       </motion.div>
 
       {/* Pagination */}
@@ -285,10 +319,10 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
           variants={fadeUpVariants}
           initial="initial"
           animate="animate"
-          className="flex items-center justify-between pt-4"
+          className="flex items-center justify-between"
         >
           <p className="text-sm text-muted-foreground">
-            Showing {(page - 1) * 12 + 1} to {Math.min(page * 12, total)} of {total} clients
+            Page {page} of {totalPages}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -300,9 +334,6 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
               <ChevronLeft className="h-4 w-4" />
               Previous
             </Button>
-            <span className="text-sm text-muted-foreground">
-              Page {page} of {totalPages}
-            </span>
             <Button
               variant="outline"
               size="sm"
@@ -316,11 +347,10 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
         </motion.div>
       )}
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Dialog */}
       <AnimatePresence>
         {deleteDialogOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               variants={overlayVariants}
               initial="initial"
@@ -329,56 +359,31 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
               onClick={handleCancelDelete}
               className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
             />
-
-            {/* Dialog */}
             <motion.div
               variants={modalVariants}
               initial="initial"
               animate="animate"
               exit="exit"
-              className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 transform"
+              className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2"
             >
               <div className="mx-4 overflow-hidden rounded-xl bg-card shadow-2xl ring-1 ring-border">
                 <div className="p-6">
-                  {/* Icon */}
                   <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
                     <AlertTriangle className="h-6 w-6 text-destructive" />
                   </div>
-
-                  {/* Content */}
                   <h3 className="mb-2 text-center text-lg font-semibold text-foreground">
                     Delete Client
                   </h3>
                   <p className="text-center text-sm text-muted-foreground">
-                    Are you sure you want to delete &ldquo;{clientToDelete?.client_name}&rdquo;? 
-                    This action cannot be undone and will also delete all associated projects.
+                    Delete &ldquo;{clientToDelete?.client_name}&rdquo;? This removes all projects.
                   </p>
                 </div>
-
-                {/* Actions */}
                 <div className="flex gap-3 border-t border-border bg-muted/30 px-6 py-4">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={handleCancelDelete}
-                    disabled={deleteClient.isPending}
-                  >
+                  <Button variant="outline" className="flex-1" onClick={handleCancelDelete} disabled={deleteClient.isPending}>
                     Cancel
                   </Button>
-                  <Button
-                    variant="destructive"
-                    className="flex-1"
-                    onClick={handleConfirmDelete}
-                    disabled={deleteClient.isPending}
-                  >
-                    {deleteClient.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Deleting...
-                      </>
-                    ) : (
-                      'Delete'
-                    )}
+                  <Button variant="destructive" className="flex-1" onClick={handleConfirmDelete} disabled={deleteClient.isPending}>
+                    {deleteClient.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Delete'}
                   </Button>
                 </div>
               </div>
@@ -386,138 +391,6 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
           </>
         )}
       </AnimatePresence>
-    </div>
-  );
-}
-
-// ============================================
-// List Header Component (Internal)
-// ============================================
-
-interface ListHeaderProps {
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  onAddClient: () => void;
-  viewMode: 'grid' | 'list';
-  onViewModeChange: (mode: 'grid' | 'list') => void;
-  sortField: ClientSortField;
-  sortOrder: SortOrder;
-  onSort: (field: ClientSortField) => void;
-  statusFilter: ClientStatus[];
-  onToggleStatusFilter: (status: ClientStatus) => void;
-  totalCount?: number;
-}
-
-function ListHeader({
-  searchQuery,
-  onSearchChange,
-  onAddClient,
-  viewMode,
-  onViewModeChange,
-  sortField,
-  sortOrder,
-  onSort,
-  statusFilter,
-  onToggleStatusFilter,
-  totalCount,
-}: ListHeaderProps) {
-  return (
-    <div className="space-y-4">
-      {/* Top row: Search and Add button */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        {/* Search */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search clients..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-
-        {/* Add button */}
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button onClick={onAddClient}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Client
-          </Button>
-        </motion.div>
-      </div>
-
-      {/* Bottom row: Filters, Sort, View toggle */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* Status filters */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Status:</span>
-          {(['active', 'inactive', 'archived'] as ClientStatus[]).map((status) => (
-            <Button
-              key={status}
-              variant={statusFilter.includes(status) ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onToggleStatusFilter(status)}
-              className="h-7 text-xs"
-            >
-              {status.charAt(0).toUpperCase() + status.slice(1)}
-            </Button>
-          ))}
-        </div>
-
-        {/* Right side controls */}
-        <div className="flex items-center gap-2">
-          {/* Sort dropdown */}
-          <select
-            value={sortField}
-            onChange={(e) => onSort(e.target.value as ClientSortField)}
-            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
-          >
-            <option value="created_at">Date added</option>
-            <option value="client_name">Name</option>
-            <option value="project_count">Projects</option>
-            <option value="total_revenue">Revenue</option>
-          </select>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={() => onSort(sortField)}
-          >
-            {sortOrder === 'asc' ? (
-              <SortAsc className="h-4 w-4" />
-            ) : (
-              <SortDesc className="h-4 w-4" />
-            )}
-          </Button>
-
-          {/* View toggle */}
-          <div className="flex rounded-md border border-input">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size="sm"
-              className="h-8 w-8 p-0 rounded-r-none"
-              onClick={() => onViewModeChange('grid')}
-            >
-              <Grid3X3 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              className="h-8 w-8 p-0 rounded-l-none"
-              onClick={() => onViewModeChange('list')}
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Count display */}
-          {totalCount !== undefined && (
-            <span className="text-sm text-muted-foreground">
-              {totalCount} client{totalCount !== 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

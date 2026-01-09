@@ -39,8 +39,8 @@ export async function getClients(options?: {
   const supabase = getSupabaseClient();
   const { filters, sort, page = 1, pageSize = 10 } = options || {};
 
-  // Build base query
-  let query = supabase.from('clients').select('*', { count: 'exact' });
+  // Use clients_with_stats view to get project_count and total_revenue
+  let query = supabase.from('clients_with_stats').select('*', { count: 'exact' });
 
   // Apply filters
   if (filters?.search) {
