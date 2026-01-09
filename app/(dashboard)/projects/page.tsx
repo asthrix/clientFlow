@@ -6,68 +6,74 @@
 // ============================================
 
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { pageVariants, modalVariants, overlayVariants } from '@/lib/animations';
 import { PageHeader } from '@/components/shared';
-import { ProjectList, ProjectForm } from '@/components/projects';
-import { useCreateProject, useUpdateProject } from '@/hooks/mutations/useProjectMutations';
-import type { Project, CreateProjectDTO, UpdateProjectDTO } from '@/types';
+import { ProjectList, ProjectForm, UnifiedProjectWizard } from '@/components/projects';
+import { useUpdateProject } from '@/hooks/mutations/useProjectMutations';
+import type { Project, UpdateProjectDTO } from '@/types';
 import { type ProjectFormData, transformProjectFormToDTO } from '@/lib/validations/project';
 import { X } from 'lucide-react';
 
 export default function ProjectsPage() {
+  const router = useRouter();
+  
   // Modal state
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
   // Mutations
-  const createProject = useCreateProject();
   const updateProject = useUpdateProject();
 
   // Handlers
   const handleAddProject = useCallback(() => {
-    setEditingProject(null);
-    setFormError(null);
-    setIsFormOpen(true);
+    setIsWizardOpen(true);
   }, []);
 
   const handleEditProject = useCallback((project: Project) => {
     setEditingProject(project);
     setFormError(null);
-    setIsFormOpen(true);
+    setIsEditFormOpen(true);
   }, []);
 
-  const handleCloseForm = useCallback(() => {
-    setIsFormOpen(false);
+  const handleCloseWizard = useCallback(() => {
+    setIsWizardOpen(false);
+  }, []);
+
+  const handleCloseEditForm = useCallback(() => {
+    setIsEditFormOpen(false);
     setEditingProject(null);
     setFormError(null);
   }, []);
 
-  const handleSubmit = useCallback(async (data: ProjectFormData) => {
+  const handleWizardSuccess = useCallback((projectId: string) => {
+    // Navigate to the new project's detail page
+    router.push(`/projects/${projectId}`);
+  }, [router]);
+
+  const handleEditSubmit = useCallback(async (data: ProjectFormData) => {
     setFormError(null);
+
+    if (!editingProject) return;
 
     // Transform form data to DTO format
     const dtoData = transformProjectFormToDTO(data);
 
     try {
-      if (editingProject) {
-        // Update existing project
-        await updateProject.mutateAsync({
-          id: editingProject.id,
-          ...dtoData,
-        } as unknown as UpdateProjectDTO);
-      } else {
-        // Create new project
-        await createProject.mutateAsync(dtoData as unknown as CreateProjectDTO);
-      }
-      handleCloseForm();
+      await updateProject.mutateAsync({
+        id: editingProject.id,
+        ...dtoData,
+      } as unknown as UpdateProjectDTO);
+      handleCloseEditForm();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'An error occurred');
     }
-  }, [editingProject, createProject, updateProject, handleCloseForm]);
+  }, [editingProject, updateProject, handleCloseEditForm]);
 
-  const isSubmitting = createProject.isPending || updateProject.isPending;
+  const isSubmitting = updateProject.isPending;
 
   return (
     <motion.div
@@ -87,9 +93,20 @@ export default function ProjectsPage() {
         onEditProject={handleEditProject}
       />
 
-      {/* Project Form Modal */}
+      {/* Unified Project Wizard for new projects */}
       <AnimatePresence>
-        {isFormOpen && (
+        {isWizardOpen && (
+          <UnifiedProjectWizard
+            isOpen={isWizardOpen}
+            onClose={handleCloseWizard}
+            onSuccess={handleWizardSuccess}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Edit Project Form Modal */}
+      <AnimatePresence>
+        {isEditFormOpen && editingProject && (
           <>
             {/* Overlay */}
             <motion.div
@@ -98,7 +115,7 @@ export default function ProjectsPage() {
               animate="animate"
               exit="exit"
               className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
-              onClick={handleCloseForm}
+              onClick={handleCloseEditForm}
             />
 
             {/* Modal */}
@@ -112,10 +129,10 @@ export default function ProjectsPage() {
               {/* Modal Header */}
               <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 backdrop-blur px-6 py-4">
                 <h2 className="text-xl font-semibold text-foreground">
-                  {editingProject ? 'Edit Project' : 'Create New Project'}
+                  Edit Project
                 </h2>
                 <button
-                  onClick={handleCloseForm}
+                  onClick={handleCloseEditForm}
                   className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                 >
                   <X className="h-5 w-5" />
@@ -125,9 +142,9 @@ export default function ProjectsPage() {
               {/* Modal Body */}
               <div className="p-6">
                 <ProjectForm
-                  project={editingProject || undefined}
-                  onSubmit={handleSubmit}
-                  onCancel={handleCloseForm}
+                  project={editingProject}
+                  onSubmit={handleEditSubmit}
+                  onCancel={handleCloseEditForm}
                   isLoading={isSubmitting}
                   error={formError}
                 />
@@ -139,3 +156,4 @@ export default function ProjectsPage() {
     </motion.div>
   );
 }
+

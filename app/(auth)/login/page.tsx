@@ -212,12 +212,12 @@ export default function LoginPage() {
       </motion.div>
 
       {/* Demo credentials hint */}
-      <motion.p
+      {/* <motion.p
         variants={fadeUpVariants}
         className="mt-6 text-center text-xs text-muted-foreground"
       >
         Secure authentication powered by Supabase
-      </motion.p>
+      </motion.p> */}
     </motion.div>
   );
 }

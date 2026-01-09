@@ -5,3 +5,5 @@
 export { CredentialCard } from './CredentialCard';
 export { CredentialList } from './CredentialList';
 export { CredentialForm } from './CredentialForm';
+export { MultiCredentialForm } from './MultiCredentialForm';
+
