@@ -7,16 +7,16 @@
 
 import { useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { pageVariants, fadeUpVariants, cardVariants, modalVariants, overlayVariants } from '@/lib/animations';
-import { PageHeader, StatusBadge, EmptyState, CardSkeleton } from '@/components/shared';
+import { pageVariants, fadeUpVariants, modalVariants, overlayVariants } from '@/lib/animations';
+import { StatusBadge, EmptyState, CardSkeleton } from '@/components/shared';
 import { CredentialAccordion, MultiCredentialForm } from '@/components/credentials';
 import { MilestoneTracker, ProjectForm } from '@/components/projects';
 import { useProject } from '@/hooks/queries/useProjects';
 import { useCredentialsByProject } from '@/hooks/queries/useCredentials';
 import { useDeleteProject, useUpdateProject } from '@/hooks/mutations/useProjectMutations';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import type { ProjectStatus, DeliveryStatus, PaymentStatus, UpdateProjectDTO } from '@/types';
 import { type ProjectFormData, transformProjectFormToDTO } from '@/lib/validations/project';
 import {
@@ -26,15 +26,16 @@ import {
   Pencil,
   Trash2,
   FolderKanban,
-  Plus,
   AlertTriangle,
   Loader2,
   ExternalLink,
   Code,
-  Key,
   User,
   Clock,
-  TrendingUp,
+  X,
+  CreditCard,
+  FileText,
+  Globe,
 } from 'lucide-react';
 
 export default function ProjectDetailPage() {
@@ -105,8 +106,8 @@ export default function ProjectDetailPage() {
   }, [projectId, updateProject]);
 
   // Format currency
-  const formatCurrency = (amount: number | undefined, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
+  const formatCurrency = (amount: number | undefined, currency: string = 'INR') => {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency,
       minimumFractionDigits: 0,
@@ -116,9 +117,9 @@ export default function ProjectDetailPage() {
 
   // Format date
   const formatDate = (dateStr: string | undefined) => {
-    if (!dateStr) return 'N/A';
+    if (!dateStr) return 'Not set';
     return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'long',
+      month: 'short',
       day: 'numeric',
       year: 'numeric',
     });
@@ -132,8 +133,11 @@ export default function ProjectDetailPage() {
           <div className="h-8 w-48 rounded bg-muted animate-pulse" />
         </div>
         <div className="grid gap-6 lg:grid-cols-3">
-          <CardSkeleton className="lg:col-span-2" />
-          <CardSkeleton />
+          <div className="lg:col-span-2 space-y-6">
+            <CardSkeleton className="h-64" />
+            <CardSkeleton className="h-48" />
+          </div>
+          <CardSkeleton className="h-96" />
         </div>
       </div>
     );
@@ -155,6 +159,10 @@ export default function ProjectDetailPage() {
   const currentDelivery = deliveryConfig[project.delivery_status] || deliveryConfig.not_started;
   const currentPayment = paymentConfig[project.payment_status] || paymentConfig.unpaid;
 
+  // Calculate payment progress
+  const paidPercentage = project.total_cost ? 
+    Math.round(((project.total_cost - (project.outstanding_balance || 0)) / project.total_cost) * 100) : 0;
+
   return (
     <motion.div
       variants={pageVariants}
@@ -164,194 +172,263 @@ export default function ProjectDetailPage() {
       className="space-y-6"
     >
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-4">
+          <Button variant="ghost" size="icon" asChild className="mt-1">
             <Link href="/projects">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
+              <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-foreground">{project.project_name}</h1>
-              <StatusBadge variant={currentStatus.variant}>
-                {currentStatus.label}
-              </StatusBadge>
+            <h1 className="text-2xl font-bold text-foreground">{project.project_name}</h1>
+            <div className="flex items-center gap-3 mt-1">
+              {project.client_name && (
+                <Link 
+                  href={`/clients/${project.client_id}`}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+                >
+                  <User className="h-3 w-3" />
+                  {project.client_name}
+                </Link>
+              )}
+              <span className="text-sm text-muted-foreground capitalize">
+                {project.project_type?.replace('_', ' ')}
+              </span>
             </div>
-            {project.client_name && (
-              <Link 
-                href={`/clients/${project.client_id}`}
-                className="text-muted-foreground hover:text-primary transition-colors"
-              >
-                {project.client_name}
-              </Link>
-            )}
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setEditModalOpen(true)}
-          >
+          <Button variant="outline" size="sm" onClick={() => setEditModalOpen(true)}>
             <Pencil className="mr-2 h-4 w-4" />
             Edit
           </Button>
           <Button 
-            variant="destructive" 
+            variant="ghost" 
             size="sm"
+            className="text-destructive hover:text-destructive"
             onClick={() => setDeleteDialogOpen(true)}
           >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      {/* Status Badges */}
-      <div className="flex flex-wrap gap-2">
-        <StatusBadge variant={currentStatus.variant}>{currentStatus.label}</StatusBadge>
-        <StatusBadge variant={currentDelivery.variant}>{currentDelivery.label}</StatusBadge>
-        <StatusBadge variant={currentPayment.variant}>{currentPayment.label}</StatusBadge>
-      </div>
-
-      {/* Content Grid */}
+      {/* Main Content with Sticky Sidebar */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Main Info */}
-        <motion.div variants={fadeUpVariants} className="lg:col-span-2 space-y-6">
-          {/* Progress - Milestone Tracker */}
-          <MilestoneTracker projectId={projectId} />
+        {/* Left Column - Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Status Overview Card */}
+          <motion.div variants={fadeUpVariants}>
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex flex-wrap gap-6">
+                {/* Status */}
+                <div className="flex-1 min-w-[120px]">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5">Status</p>
+                  <StatusBadge variant={currentStatus.variant}>
+                    {currentStatus.label}
+                  </StatusBadge>
+                </div>
+                {/* Delivery */}
+                <div className="flex-1 min-w-[120px]">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5">Delivery</p>
+                  <StatusBadge variant={currentDelivery.variant}>
+                    {currentDelivery.label}
+                  </StatusBadge>
+                </div>
+                {/* Payment */}
+                <div className="flex-1 min-w-[120px]">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5">Payment</p>
+                  <StatusBadge variant={currentPayment.variant}>
+                    {currentPayment.label}
+                  </StatusBadge>
+                </div>
+                {/* Progress */}
+                <div className="flex-1 min-w-[120px]">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5">Progress</p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary rounded-full transition-all" 
+                        style={{ width: `${project.progress_percentage || 0}%` }}
+                      />
+                    </div>
+                    <span className="text-sm font-medium">{project.progress_percentage || 0}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
 
           {/* Description */}
           {project.description && (
-            <div className="rounded-xl border border-border bg-card p-6">
-              <h2 className="font-semibold text-foreground mb-2">Description</h2>
-              <p className="text-muted-foreground whitespace-pre-wrap">{project.description}</p>
-            </div>
+            <motion.div variants={fadeUpVariants}>
+              <div className="rounded-xl border border-border bg-card p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <h2 className="font-semibold text-foreground">Description</h2>
+                </div>
+                <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">
+                  {project.description}
+                </p>
+              </div>
+            </motion.div>
           )}
+
+          {/* Milestone Tracker */}
+          <motion.div variants={fadeUpVariants}>
+            <MilestoneTracker projectId={projectId} projectType={project.project_type} />
+          </motion.div>
 
           {/* Credentials */}
-          {credentialsLoading ? (
-            <div className="rounded-xl border border-border bg-card p-6">
-              <div className="animate-pulse space-y-3">
-                <div className="h-4 bg-muted rounded w-1/3" />
-                <div className="h-10 bg-muted rounded" />
-                <div className="h-10 bg-muted rounded" />
+          <motion.div variants={fadeUpVariants}>
+            {credentialsLoading ? (
+              <div className="rounded-xl border border-border bg-card p-5">
+                <div className="animate-pulse space-y-3">
+                  <div className="h-4 bg-muted rounded w-1/4" />
+                  <div className="h-12 bg-muted rounded" />
+                </div>
               </div>
-            </div>
-          ) : (
-            <CredentialAccordion
-              credentials={credentials || []}
-              onAdd={() => setAddCredentialsModalOpen(true)}
-            />
-          )}
-        </motion.div>
+            ) : (
+              <CredentialAccordion
+                credentials={credentials || []}
+                onAdd={() => setAddCredentialsModalOpen(true)}
+              />
+            )}
+          </motion.div>
+        </div>
 
-        {/* Sidebar */}
-        <motion.div variants={fadeUpVariants} className="space-y-6">
-          {/* Financial */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h2 className="font-semibold text-foreground mb-4">Financial</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Total Value</span>
-                <span className="font-semibold">{formatCurrency(project.total_cost, project.currency)}</span>
+        {/* Right Column - Sticky Sidebar */}
+        <div className="lg:sticky lg:top-20 lg:self-start space-y-5">
+          {/* Financial Summary */}
+          <motion.div variants={fadeUpVariants}>
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <h2 className="font-semibold text-foreground">Financial</h2>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Outstanding</span>
-                <span className="font-semibold text-amber-600">
-                  {formatCurrency(project.outstanding_balance, project.currency)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Structure</span>
-                <span className="text-sm font-medium capitalize">{project.payment_structure}</span>
+              
+              <div className="space-y-4">
+                {/* Total Value */}
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Total Value</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {formatCurrency(project.total_cost, project.currency)}
+                  </p>
+                </div>
+
+                {/* Payment Progress */}
+                <div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+                    <span>Payment Progress</span>
+                    <span>{paidPercentage}%</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary rounded-full transition-all" 
+                      style={{ width: `${paidPercentage}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Outstanding */}
+                {(project.outstanding_balance ?? 0) > 0 && (
+                  <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50">
+                    <span className="text-sm text-muted-foreground">Outstanding</span>
+                    <span className="font-semibold">
+                      {formatCurrency(project.outstanding_balance, project.currency)}
+                    </span>
+                  </div>
+                )}
+
+                {/* Payment Structure */}
+                <div className="flex items-center gap-2 text-sm">
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Structure:</span>
+                  <span className="font-medium capitalize">{project.payment_structure?.replace('_', ' ')}</span>
+                </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Timeline */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h2 className="font-semibold text-foreground mb-4">Timeline</h2>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
+          <motion.div variants={fadeUpVariants}>
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center gap-2 mb-4">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Start Date</p>
-                  <p className="text-sm font-medium">{formatDate(project.start_date)}</p>
-                </div>
+                <h2 className="font-semibold text-foreground">Timeline</h2>
               </div>
-              <div className="flex items-center gap-3">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Expected Completion</p>
-                  <p className="text-sm font-medium">{formatDate(project.expected_completion_date)}</p>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Start Date</span>
+                  <span className="text-sm font-medium">{formatDate(project.start_date)}</span>
                 </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Expected End</span>
+                  <span className="text-sm font-medium">{formatDate(project.expected_completion_date)}</span>
+                </div>
+                {project.actual_completion_date && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Completed</span>
+                    <span className="text-sm font-medium">{formatDate(project.actual_completion_date)}</span>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Links */}
           {(project.live_url || project.staging_url || project.repository_url) && (
-            <div className="rounded-xl border border-border bg-card p-6">
-              <h2 className="font-semibold text-foreground mb-4">Links</h2>
-              <div className="space-y-3">
-                {project.live_url && (
-                  <a
-                    href={project.live_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-primary hover:underline"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    Live Site
-                  </a>
-                )}
-                {project.staging_url && (
-                  <a
-                    href={project.staging_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-primary hover:underline"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    Staging
-                  </a>
-                )}
-                {project.repository_url && (
-                  <a
-                    href={project.repository_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-primary hover:underline"
-                  >
-                    <Code className="h-4 w-4" />
-                    Repository
-                  </a>
-                )}
+            <motion.div variants={fadeUpVariants}>
+              <div className="rounded-xl border border-border bg-card p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                  <h2 className="font-semibold text-foreground">Links</h2>
+                </div>
+                
+                <div className="space-y-2">
+                  {project.live_url && (
+                    <a
+                      href={project.live_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 text-sm hover:bg-muted transition-colors"
+                    >
+                      <Globe className="h-4 w-4 text-muted-foreground" />
+                      <span className="flex-1 truncate">Live Site</span>
+                      <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                    </a>
+                  )}
+                  {project.staging_url && (
+                    <a
+                      href={project.staging_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 text-sm hover:bg-muted transition-colors"
+                    >
+                      <Globe className="h-4 w-4 text-muted-foreground" />
+                      <span className="flex-1 truncate">Staging</span>
+                      <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                    </a>
+                  )}
+                  {project.repository_url && (
+                    <a
+                      href={project.repository_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 text-sm hover:bg-muted transition-colors"
+                    >
+                      <Code className="h-4 w-4 text-muted-foreground" />
+                      <span className="flex-1 truncate">Repository</span>
+                      <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                    </a>
+                  )}
+                </div>
               </div>
-            </div>
+            </motion.div>
           )}
-
-          {/* Tech Stack */}
-          {project.technology_stack && project.technology_stack.length > 0 && (
-            <div className="rounded-xl border border-border bg-card p-6">
-              <h2 className="font-semibold text-foreground mb-4">Tech Stack</h2>
-              <div className="flex flex-wrap gap-2">
-                {project.technology_stack.map((tech) => (
-                  <span
-                    key={tech}
-                    className="rounded-full bg-muted px-3 py-1 text-xs font-medium"
-                  >
-                    {tech}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </motion.div>
+        </div>
       </div>
 
       {/* Add Credentials Modal */}
@@ -379,7 +456,7 @@ export default function ProjectDetailPage() {
                   onClick={() => setAddCredentialsModalOpen(false)}
                   className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                 >
-                  ×
+                  <X className="h-5 w-5" />
                 </button>
               </div>
               <div className="p-6">
@@ -419,8 +496,7 @@ export default function ProjectDetailPage() {
                   onClick={() => setEditModalOpen(false)}
                   className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                 >
-                  <AlertTriangle className="h-5 w-5 hidden" />
-                  ×
+                  <X className="h-5 w-5" />
                 </button>
               </div>
               <div className="p-6">

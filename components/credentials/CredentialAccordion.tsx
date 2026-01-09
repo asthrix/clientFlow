@@ -2,7 +2,7 @@
 
 // ============================================
 // ClientFlow CRM - Credential Accordion Component
-// Compact accordion view for credentials (one open at a time)
+// Displays credentials in collapsible accordion format
 // ============================================
 
 import { useState } from 'react';
@@ -14,18 +14,17 @@ import {
   ChevronDown,
   Plus,
   Key,
+  Lock,
   Globe,
   Server,
   Database,
+  Terminal,
   Mail,
   Code,
-  Terminal,
-  Lock,
   Eye,
   EyeOff,
   Copy,
   Check,
-  ExternalLink,
   Pencil,
   Trash2,
 } from 'lucide-react';
@@ -41,6 +40,19 @@ const typeIcons: Record<CredentialType, React.ComponentType<{ className?: string
   api: Key,
   ssh: Terminal,
   other: Lock,
+};
+
+// Type colors - consistent colors for each credential type
+const typeColors: Record<CredentialType, { bg: string; text: string; border: string }> = {
+  domain: { bg: 'bg-blue-500/10', text: 'text-blue-500', border: 'border-blue-500/20' },
+  hosting: { bg: 'bg-emerald-500/10', text: 'text-emerald-500', border: 'border-emerald-500/20' },
+  database: { bg: 'bg-amber-500/10', text: 'text-amber-500', border: 'border-amber-500/20' },
+  ftp: { bg: 'bg-purple-500/10', text: 'text-purple-500', border: 'border-purple-500/20' },
+  email: { bg: 'bg-rose-500/10', text: 'text-rose-500', border: 'border-rose-500/20' },
+  cms: { bg: 'bg-cyan-500/10', text: 'text-cyan-500', border: 'border-cyan-500/20' },
+  api: { bg: 'bg-orange-500/10', text: 'text-orange-500', border: 'border-orange-500/20' },
+  ssh: { bg: 'bg-indigo-500/10', text: 'text-indigo-500', border: 'border-indigo-500/20' },
+  other: { bg: 'bg-slate-500/10', text: 'text-slate-500', border: 'border-slate-500/20' },
 };
 
 // Type labels
@@ -73,9 +85,13 @@ export function CredentialAccordion({
   const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set());
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  // Toggle accordion item
+  // Toggle accordion item (auto-close previous)
   const toggleItem = (id: string) => {
     setOpenId(openId === id ? null : id);
+    // Reset visibility when closing
+    if (openId === id) {
+      setVisibleFields(new Set());
+    }
   };
 
   // Toggle field visibility
@@ -135,6 +151,7 @@ export function CredentialAccordion({
         <div className="divide-y divide-border">
           {credentials.map((credential) => {
             const Icon = typeIcons[credential.credential_type] || Lock;
+            const colors = typeColors[credential.credential_type] || typeColors.other;
             const isOpen = openId === credential.id;
 
             return (
@@ -147,10 +164,9 @@ export function CredentialAccordion({
                   onClick={() => toggleItem(credential.id)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                      isOpen ? 'bg-primary/10' : 'bg-muted'
-                    }`}>
-                      <Icon className={`h-4 w-4 ${isOpen ? 'text-primary' : 'text-muted-foreground'}`} />
+                    {/* Type-colored icon */}
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${colors.bg}`}>
+                      <Icon className={`h-4 w-4 ${colors.text}`} />
                     </div>
                     <div>
                       <p className="font-medium text-foreground">{credential.service_name}</p>
@@ -168,7 +184,7 @@ export function CredentialAccordion({
                   </motion.div>
                 </button>
 
-                {/* Accordion Content */}
+                {/* Accordion Content - Two Column Layout */}
                 <AnimatePresence>
                   {isOpen && (
                     <motion.div
@@ -178,49 +194,54 @@ export function CredentialAccordion({
                       transition={{ duration: 0.2 }}
                       className="overflow-hidden"
                     >
-                      <div className="px-4 pb-4 pt-2 space-y-3">
-                        {/* Username */}
-                        {credential.username && (
-                          <CredentialField
-                            label="Username"
-                            value={credential.username}
-                            fieldKey={`${credential.id}-username`}
-                            isVisible={true}
-                            onCopy={() => copyToClipboard(credential.username!, `${credential.id}-username`)}
-                            isCopied={copiedField === `${credential.id}-username`}
-                          />
-                        )}
+                      <div className="px-4 pb-4 pt-2">
+                        {/* Two-column grid for credential fields */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {/* Username */}
+                          {credential.username && (
+                            <CredentialField
+                              label="Username"
+                              value={credential.username}
+                              fieldKey={`${credential.id}-username`}
+                              isVisible={true}
+                              onCopy={() => copyToClipboard(credential.username!, `${credential.id}-username`)}
+                              isCopied={copiedField === `${credential.id}-username`}
+                            />
+                          )}
 
-                        {/* Password */}
-                        {credential.password && (
-                          <CredentialField
-                            label="Password"
-                            value={credential.password}
-                            fieldKey={`${credential.id}-password`}
-                            isVisible={visibleFields.has(`${credential.id}-password`)}
-                            isSecret
-                            onToggleVisibility={() => toggleFieldVisibility(`${credential.id}-password`)}
-                            onCopy={() => copyToClipboard(credential.password!, `${credential.id}-password`)}
-                            isCopied={copiedField === `${credential.id}-password`}
-                          />
-                        )}
+                          {/* Password */}
+                          {credential.password && (
+                            <CredentialField
+                              label="Password"
+                              value={credential.password}
+                              fieldKey={`${credential.id}-password`}
+                              isVisible={visibleFields.has(`${credential.id}-password`)}
+                              isSecret
+                              onToggleVisibility={() => toggleFieldVisibility(`${credential.id}-password`)}
+                              onCopy={() => copyToClipboard(credential.password!, `${credential.id}-password`)}
+                              isCopied={copiedField === `${credential.id}-password`}
+                            />
+                          )}
 
-                        {/* API Key */}
-                        {credential.api_key && (
-                          <CredentialField
-                            label="API Key"
-                            value={credential.api_key}
-                            fieldKey={`${credential.id}-api_key`}
-                            isVisible={visibleFields.has(`${credential.id}-api_key`)}
-                            isSecret
-                            onToggleVisibility={() => toggleFieldVisibility(`${credential.id}-api_key`)}
-                            onCopy={() => copyToClipboard(credential.api_key!, `${credential.id}-api_key`)}
-                            isCopied={copiedField === `${credential.id}-api_key`}
-                          />
-                        )}
+                          {/* API Key - spans full width if it's the only field or odd */}
+                          {credential.api_key && (
+                            <div className={!credential.username && !credential.password ? 'sm:col-span-2' : ''}>
+                              <CredentialField
+                                label="API Key"
+                                value={credential.api_key}
+                                fieldKey={`${credential.id}-api_key`}
+                                isVisible={visibleFields.has(`${credential.id}-api_key`)}
+                                isSecret
+                                onToggleVisibility={() => toggleFieldVisibility(`${credential.id}-api_key`)}
+                                onCopy={() => copyToClipboard(credential.api_key!, `${credential.id}-api_key`)}
+                                isCopied={copiedField === `${credential.id}-api_key`}
+                              />
+                            </div>
+                          )}
+                        </div>
 
                         {/* Action Buttons */}
-                        <div className="flex items-center gap-2 pt-2">
+                        <div className="flex items-center gap-2 pt-3 mt-3 border-t border-border">
                           {onEdit && (
                             <Button
                               variant="outline"

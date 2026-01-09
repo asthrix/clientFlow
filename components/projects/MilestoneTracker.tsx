@@ -69,6 +69,7 @@ interface MilestoneTrackerProps {
 }
 
 export function MilestoneTracker({ projectId, projectType = 'website' }: MilestoneTrackerProps) {
+  const [isCardExpanded, setIsCardExpanded] = useState(false);
   const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(new Set());
   const [selectedType, setSelectedType] = useState<ProjectType>(projectType);
   const [isInitializing, setIsInitializing] = useState(false);
@@ -230,189 +231,198 @@ export function MilestoneTracker({ projectId, projectType = 'website' }: Milesto
       animate="animate"
       className="rounded-xl border border-border bg-card overflow-hidden"
     >
-      {/* Header with progress bar */}
-      <div className="border-b border-border p-4">
+      {/* Header with progress bar - clickable to expand/collapse */}
+      <div 
+        className="p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+        onClick={() => setIsCardExpanded(!isCardExpanded)}
+      >
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-semibold text-foreground">Project Progress</h3>
+          <div className="flex items-center gap-2">
+            <motion.div
+              animate={{ rotate: isCardExpanded ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </motion.div>
+            <h3 className="font-semibold text-foreground">Project Progress</h3>
+          </div>
           <span className="text-2xl font-bold text-primary">{overallProgress}%</span>
         </div>
-        <div className="h-3 w-full rounded-full bg-muted overflow-hidden">
+        <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
           <motion.div
-            className="h-full bg-linear-to-r from-primary to-primary/80 rounded-full"
+            className="h-full bg-primary rounded-full"
             initial={{ width: 0 }}
             animate={{ width: `${overallProgress}%` }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
           />
         </div>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-2 text-xs text-muted-foreground">
           {applicableMilestones.filter((m) => m.is_completed).length} of {applicableMilestones.length} milestones completed
         </p>
       </div>
 
-      {/* Milestone list */}
-      <div className="divide-y divide-border">
-        {applicableMilestones.map((milestone) => {
-          const Icon = MilestoneIconComponents[milestone.milestone_type as MilestoneType] || Rocket;
-          const isExpanded = expandedMilestones.has(milestone.id);
-          const subTaskDefs = MilestoneSubTasks[milestone.milestone_type as MilestoneType] || [];
+      {/* Milestone list - collapsible */}
+      <AnimatePresence>
+        {isCardExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden border-t border-border"
+          >
+            <div className="divide-y divide-border">
+              {applicableMilestones.map((milestone) => {
+                const Icon = MilestoneIconComponents[milestone.milestone_type as MilestoneType] || Rocket;
+                const isExpanded = expandedMilestones.has(milestone.id);
+                const subTaskDefs = MilestoneSubTasks[milestone.milestone_type as MilestoneType] || [];
 
-          return (
-            <div key={milestone.id}>
-              {/* Milestone row */}
-              <div
-                className={`flex items-center gap-3 p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
-                  milestone.is_completed ? 'bg-primary/5' : ''
-                }`}
-                onClick={() => toggleExpanded(milestone.id)}
-              >
-                {/* Expand/collapse icon */}
-                <button
-                  className="text-muted-foreground"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleExpanded(milestone.id);
-                  }}
-                >
-                  {isExpanded ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </button>
+                return (
+                  <div key={milestone.id}>
+                    {/* Milestone row */}
+                    <div
+                      className={`flex items-center gap-3 p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
+                        milestone.is_completed ? 'bg-primary/5' : ''
+                      }`}
+                      onClick={() => toggleExpanded(milestone.id)}
+                    >
+                      {/* Expand/collapse icon */}
+                      <button
+                        className="text-muted-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleExpanded(milestone.id);
+                        }}
+                      >
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </button>
 
-                {/* Completion checkbox */}
-                <button
-                  className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
-                    milestone.is_completed
-                      ? 'bg-primary border-primary text-primary-foreground'
-                      : 'border-muted-foreground/30 hover:border-primary'
-                  }`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleToggleMilestone(milestone);
-                  }}
-                  disabled={updateMilestone.isPending}
-                >
-                  {milestone.is_completed && <Check className="h-3.5 w-3.5" />}
-                </button>
+                      {/* Completion checkbox */}
+                      <button
+                        className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
+                          milestone.is_completed
+                            ? 'bg-primary border-primary text-primary-foreground'
+                            : 'border-muted-foreground/30 hover:border-primary'
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleMilestone(milestone);
+                        }}
+                        disabled={updateMilestone.isPending}
+                      >
+                        {milestone.is_completed && <Check className="h-3.5 w-3.5" />}
+                      </button>
 
-                {/* Icon */}
-                <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                    milestone.is_completed ? 'bg-primary/10' : 'bg-muted'
-                  }`}
-                >
-                  <Icon
-                    className={`h-4 w-4 ${
-                      milestone.is_completed ? 'text-primary' : 'text-muted-foreground'
-                    }`}
-                  />
-                </div>
-
-                {/* Label and progress */}
-                <div className="flex-1 min-w-0">
-                  <p
-                    className={`font-medium ${
-                      milestone.is_completed ? 'text-primary' : 'text-foreground'
-                    }`}
-                  >
-                    {MilestoneLabels[milestone.milestone_type as MilestoneType]}
-                  </p>
-                  {!milestone.is_completed && milestone.sub_tasks.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {milestone.sub_tasks.filter((st) => st.is_completed).length} of{' '}
-                      {milestone.sub_tasks.length} tasks done
-                    </p>
-                  )}
-                </div>
-
-                {/* Progress indicator */}
-                {!milestone.is_completed && (
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-16 rounded-full bg-muted overflow-hidden">
+                      {/* Icon */}
                       <div
-                        className="h-full bg-primary/60 rounded-full"
-                        style={{ width: `${milestone.progress}%` }}
-                      />
-                    </div>
-                    <span className="text-xs text-muted-foreground w-8">
-                      {milestone.progress}%
-                    </span>
-                  </div>
-                )}
+                        className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                          milestone.is_completed ? 'bg-primary/10' : 'bg-muted'
+                        }`}
+                      >
+                        <Icon
+                          className={`h-4 w-4 ${
+                            milestone.is_completed ? 'text-primary' : 'text-muted-foreground'
+                          }`}
+                        />
+                      </div>
 
-                {/* Completed date */}
-                {milestone.is_completed && milestone.completed_at && (
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(milestone.completed_at).toLocaleDateString()}
-                  </span>
-                )}
-              </div>
-
-              {/* Sub-tasks */}
-              <AnimatePresence>
-                {isExpanded && subTaskDefs.length > 0 && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden bg-muted/20"
-                  >
-                    <div className="py-2 px-4 pl-16 space-y-1">
-                      {subTaskDefs.map((def: SubTaskDefinition) => {
-                        const subTask = milestone.sub_tasks.find(
-                          (st) => st.sub_task_id === def.id
-                        );
-                        const isCompleted = subTask?.is_completed || false;
-
-                        return (
-                          <div
-                            key={def.id}
-                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer"
-                            onClick={() => {
-                              if (subTask) {
-                                handleToggleSubTask(subTask.id, isCompleted);
-                              }
-                            }}
-                          >
-                            <button
-                              className={`flex h-5 w-5 items-center justify-center rounded border transition-colors ${
-                                isCompleted
-                                  ? 'bg-primary border-primary text-primary-foreground'
-                                  : 'border-muted-foreground/30 hover:border-primary'
-                              }`}
-                              disabled={toggleSubTask.isPending}
-                            >
-                              {isCompleted && <Check className="h-3 w-3" />}
-                            </button>
-                            <div className="flex-1">
-                              <p
-                                className={`text-sm ${
-                                  isCompleted
-                                    ? 'text-muted-foreground line-through'
-                                    : 'text-foreground'
-                                }`}
-                              >
-                                {def.label}
-                              </p>
-                              {def.description && (
-                                <p className="text-xs text-muted-foreground">
-                                  {def.description}
-                                </p>
-                              )}
-                            </div>
+                      {/* Label and progress */}
+                      <div className="flex-1">
+                        <p
+                          className={`font-medium ${
+                            milestone.is_completed
+                              ? 'text-muted-foreground line-through'
+                              : 'text-foreground'
+                          }`}
+                        >
+                          {MilestoneLabels[milestone.milestone_type as MilestoneType]}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="h-1.5 w-24 rounded-full bg-muted overflow-hidden">
+                            <div
+                              className="h-full bg-primary rounded-full"
+                              style={{
+                                width: `${milestone.is_completed ? 100 : milestone.progress}%`,
+                              }}
+                            />
                           </div>
-                        );
-                      })}
+                          <span className="text-xs text-muted-foreground">
+                            {milestone.is_completed ? 100 : milestone.progress}%
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+
+                    {/* Sub-tasks */}
+                    <AnimatePresence>
+                      {isExpanded && subTaskDefs.length > 0 && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden bg-muted/30"
+                        >
+                          <div className="p-4 pl-20 space-y-2">
+                            {subTaskDefs.map((def: SubTaskDefinition) => {
+                              const subTaskRecord = milestone.sub_tasks?.find(
+                                (st) => st.sub_task_id === def.id
+                              );
+                              const isCompleted = subTaskRecord?.is_completed || false;
+
+                              return (
+                                <div
+                                  key={def.id}
+                                  className="flex items-start gap-3 py-1"
+                                >
+                                  <button
+                                    onClick={() =>
+                                      subTaskRecord &&
+                                      handleToggleSubTask(subTaskRecord.id, isCompleted)
+                                    }
+                                    className={`flex h-5 w-5 items-center justify-center rounded border transition-colors ${
+                                      isCompleted
+                                        ? 'bg-primary border-primary text-primary-foreground'
+                                        : 'border-muted-foreground/30 hover:border-primary'
+                                    }`}
+                                    disabled={toggleSubTask.isPending}
+                                  >
+                                    {isCompleted && <Check className="h-3 w-3" />}
+                                  </button>
+                                  <div className="flex-1">
+                                    <p
+                                      className={`text-sm ${
+                                        isCompleted
+                                          ? 'text-muted-foreground line-through'
+                                          : 'text-foreground'
+                                      }`}
+                                    >
+                                      {def.label}
+                                    </p>
+                                    {def.description && (
+                                      <p className="text-xs text-muted-foreground">
+                                        {def.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
