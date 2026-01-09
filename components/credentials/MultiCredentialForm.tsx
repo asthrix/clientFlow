@@ -11,6 +11,13 @@ import { fadeUpVariants, shakeVariants } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useCreateMultipleCredentials } from '@/hooks/mutations/useCreateMultipleCredentials';
 import type { CredentialType } from '@/types';
 import {
@@ -264,18 +271,21 @@ export function MultiCredentialForm({
 
                   <div className="space-y-2">
                     <Label htmlFor={`type_${entry.id}`}>Type</Label>
-                    <select
-                      id={`type_${entry.id}`}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                      value={entry.credential_type}
-                      onChange={(e) => updateEntry(entry.id, 'credential_type', e.target.value as CredentialType)}
+                    <Select 
+                      value={entry.credential_type} 
+                      onValueChange={(value) => updateEntry(entry.id, 'credential_type', value as CredentialType)}
                     >
-                      {credentialTypes.map((type) => (
-                        <option key={type.value} value={type.value}>
-                          {type.label}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {credentialTypes.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 

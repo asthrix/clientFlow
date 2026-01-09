@@ -7,7 +7,7 @@
 
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   projectSchema,
@@ -25,6 +25,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useClients } from '@/hooks/queries/useClients';
 import type { Project } from '@/types';
 import { Loader2, AlertCircle } from 'lucide-react';
@@ -82,6 +89,7 @@ export function ProjectForm({
     watch,
     reset,
     setValue,
+    control,
     formState: { errors, isDirty },
   } = useForm<ProjectFormData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -208,18 +216,24 @@ export function ProjectForm({
             {/* Client */}
             <div className="space-y-1.5">
               <Label htmlFor="client_id" className="text-sm">Client <span className="text-destructive">*</span></Label>
-              <select
-                id="client_id"
-                className={`flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${errors.client_id ? 'border-destructive' : 'border-input'}`}
-                {...register('client_id')}
-              >
-                <option value="">Select a client...</option>
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.client_name} {client.company_name ? `(${client.company_name})` : ''}
-                  </option>
-                ))}
-              </select>
+              <Controller
+                control={control}
+                name="client_id"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className={`w-full ${errors.client_id ? 'border-destructive' : ''}`}>
+                      <SelectValue placeholder="Select a client..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.client_name} {client.company_name ? `(${client.company_name})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               <AnimatePresence>
                 {errors.client_id && (
                   <motion.p variants={fieldErrorVariants} initial="initial" animate="animate" exit="exit" className="text-xs text-destructive">
@@ -232,17 +246,24 @@ export function ProjectForm({
             {/* Project Type */}
             <div className="space-y-1.5">
               <Label htmlFor="project_type" className="text-sm">Project Type <span className="text-destructive">*</span></Label>
-              <select
-                id="project_type"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                {...register('project_type')}
-              >
-                {projectTypeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <Controller
+                control={control}
+                name="project_type"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {projectTypeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             {/* Description */}
@@ -268,33 +289,47 @@ export function ProjectForm({
             {/* Project Status */}
             <div className="space-y-1.5">
               <Label htmlFor="status" className="text-sm">Status</Label>
-              <select
-                id="status"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                {...register('status')}
-              >
-                {statusOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <Controller
+                control={control}
+                name="status"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             {/* Delivery Status */}
             <div className="space-y-1.5">
               <Label htmlFor="delivery_status" className="text-sm">Delivery</Label>
-              <select
-                id="delivery_status"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                {...register('delivery_status')}
-              >
-                {deliveryOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <Controller
+                control={control}
+                name="delivery_status"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select delivery" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {deliveryOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             {/* Progress */}
@@ -352,49 +387,70 @@ export function ProjectForm({
             {/* Currency */}
             <div className="space-y-1.5">
               <Label htmlFor="currency" className="text-sm">Currency</Label>
-              <select
-                id="currency"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                {...register('currency')}
-              >
-                {currencyValues.map((currency) => (
-                  <option key={currency} value={currency}>
-                    {currency}
-                  </option>
-                ))}
-              </select>
+              <Controller
+                control={control}
+                name="currency"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {currencyValues.map((currency) => (
+                        <SelectItem key={currency} value={currency}>
+                          {currency}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             {/* Payment Structure */}
             <div className="space-y-1.5">
               <Label htmlFor="payment_structure" className="text-sm">Structure</Label>
-              <select
-                id="payment_structure"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                {...register('payment_structure')}
-              >
-                {paymentStructureOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <Controller
+                control={control}
+                name="payment_structure"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select structure" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {paymentStructureOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             {/* Payment Status */}
             <div className="space-y-1.5">
               <Label htmlFor="payment_status" className="text-sm">Payment Status</Label>
-              <select
-                id="payment_status"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                {...register('payment_status')}
-              >
-                {paymentStatusOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <Controller
+                control={control}
+                name="payment_status"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select payment status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {paymentStatusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             {/* Total Cost */}

@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   credentialSchema,
@@ -19,6 +19,13 @@ import { fadeUpVariants, fieldErrorVariants, shakeVariants } from '@/lib/animati
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useProjects } from '@/hooks/queries/useProjects';
 import type { Credential, CredentialType } from '@/types';
 import {
@@ -76,6 +83,7 @@ export function CredentialForm({
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isDirty },
   } = useForm<CredentialFormData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -173,37 +181,49 @@ export function CredentialForm({
           {/* Credential Type */}
           <div className="space-y-2">
             <Label htmlFor="credential_type">Type *</Label>
-            <select
-              id="credential_type"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              {...register('credential_type')}
-            >
-              {credentialTypeValues.map((type) => (
-                <option key={type} value={type}>
-                  {credentialTypeLabels[type]}
-                </option>
-              ))}
-            </select>
+            <Controller
+              control={control}
+              name="credential_type"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {credentialTypeValues.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {credentialTypeLabels[type]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
 
           {/* Project */}
           <div className="space-y-2">
             <Label htmlFor="project_id">Project (Optional)</Label>
-            <div className="relative">
-              <FolderKanban className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <select
-                id="project_id"
-                className="flex h-10 w-full rounded-md border border-input bg-background pl-10 pr-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                {...register('project_id')}
-              >
-                <option value="">No project</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.project_name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Controller
+              control={control}
+              name="project_id"
+              render={({ field }) => (
+                <Select value={field.value || ''} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full">
+                    <FolderKanban className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <SelectValue placeholder="No project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No project</SelectItem>
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.project_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
         </div>
       </div>

@@ -13,6 +13,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useClients } from '@/hooks/queries/useClients';
 import { useCreateClient } from '@/hooks/mutations/useClientMutations';
 import { useCreateProject } from '@/hooks/mutations/useProjectMutations';
@@ -506,24 +513,25 @@ export function UnifiedProjectWizard({
 
                   <div className="space-y-2">
                     <Label htmlFor="project_type">Project Type</Label>
-                    <select
-                      id="project_type"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                      value={project.project_type}
-                      onChange={(e) =>
-                        setProject({ ...project, project_type: e.target.value as typeof project.project_type })
-                      }
+                    <Select 
+                      value={project.project_type} 
+                      onValueChange={(value) => setProject({ ...project, project_type: value as typeof project.project_type })}
                     >
-                      <option value="website">Website</option>
-                      <option value="web_app">Web App</option>
-                      <option value="mobile_app">Mobile App</option>
-                      <option value="ecommerce">E-Commerce</option>
-                      <option value="landing_page">Landing Page</option>
-                      <option value="design">Design</option>
-                      <option value="consulting">Consulting</option>
-                      <option value="maintenance">Maintenance</option>
-                      <option value="other">Other</option>
-                    </select>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="website">Website</SelectItem>
+                        <SelectItem value="web_app">Web App</SelectItem>
+                        <SelectItem value="mobile_app">Mobile App</SelectItem>
+                        <SelectItem value="ecommerce">E-Commerce</SelectItem>
+                        <SelectItem value="landing_page">Landing Page</SelectItem>
+                        <SelectItem value="design">Design</SelectItem>
+                        <SelectItem value="consulting">Consulting</SelectItem>
+                        <SelectItem value="maintenance">Maintenance</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">
@@ -576,19 +584,20 @@ export function UnifiedProjectWizard({
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="currency">Currency</Label>
-                      <select
-                        id="currency"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        value={project.currency}
-                        onChange={(e) =>
-                          setProject({ ...project, currency: e.target.value as typeof project.currency })
-                        }
+                      <Select 
+                        value={project.currency} 
+                        onValueChange={(value) => setProject({ ...project, currency: value as typeof project.currency })}
                       >
-                        <option value="INR">INR (₹)</option>
-                        <option value="USD">USD ($)</option>
-                        <option value="EUR">EUR (€)</option>
-                        <option value="GBP">GBP (£)</option>
-                      </select>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select currency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="INR">INR (₹)</SelectItem>
+                          <SelectItem value="USD">USD ($)</SelectItem>
+                          <SelectItem value="EUR">EUR (€)</SelectItem>
+                          <SelectItem value="GBP">GBP (£)</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="space-y-2">
@@ -687,19 +696,21 @@ export function UnifiedProjectWizard({
 
                           <div className="space-y-1">
                             <Label className="text-xs">Type</Label>
-                            <select
-                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                              value={cred.credential_type}
-                              onChange={(e) =>
-                                updateCredential(cred.id, 'credential_type', e.target.value)
-                              }
+                            <Select 
+                              value={cred.credential_type} 
+                              onValueChange={(value) => updateCredential(cred.id, 'credential_type', value)}
                             >
-                              {credentialTypes.map((t) => (
-                                <option key={t.value} value={t.value}>
-                                  {t.label}
-                                </option>
-                              ))}
-                            </select>
+                              <SelectTrigger className="w-full h-10">
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {credentialTypes.map((t) => (
+                                  <SelectItem key={t.value} value={t.value}>
+                                    {t.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
 
                           <div className="space-y-1">

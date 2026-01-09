@@ -19,6 +19,13 @@ import { useDeleteProject } from '@/hooks/mutations/useProjectMutations';
 import { useDebounce } from '@/hooks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { Project, ProjectFilters, ProjectSortField, SortOrder, ProjectStatus, DeliveryStatus } from '@/types';
 import {
   Search,
@@ -300,16 +307,17 @@ export function ProjectList({ onAddProject, onEditProject, clientId }: ProjectLi
 
         {/* Sort */}
         <div className="flex items-center gap-2">
-          <select
-            value={sortField}
-            onChange={(e) => handleSort(e.target.value as ProjectSortField)}
-            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
-          >
-            <option value="created_at">Date added</option>
-            <option value="project_name">Name</option>
-            <option value="total_cost">Value</option>
-            <option value="progress_percentage">Progress</option>
-          </select>
+          <Select value={sortField} onValueChange={(value) => handleSort(value as ProjectSortField)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_at">Date added</SelectItem>
+              <SelectItem value="project_name">Name</SelectItem>
+              <SelectItem value="total_cost">Value</SelectItem>
+              <SelectItem value="progress_percentage">Progress</SelectItem>
+            </SelectContent>
+          </Select>
           <Button
             variant="outline"
             size="sm"
