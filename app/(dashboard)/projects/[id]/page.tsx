@@ -10,7 +10,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { pageVariants, fadeUpVariants, cardVariants, modalVariants, overlayVariants } from '@/lib/animations';
 import { PageHeader, StatusBadge, EmptyState, CardSkeleton } from '@/components/shared';
-import { CredentialCard, MultiCredentialForm } from '@/components/credentials';
+import { CredentialAccordion, MultiCredentialForm } from '@/components/credentials';
 import { MilestoneTracker, ProjectForm } from '@/components/projects';
 import { useProject } from '@/hooks/queries/useProjects';
 import { useCredentialsByProject } from '@/hooks/queries/useCredentials';
@@ -233,34 +233,20 @@ export default function ProjectDetailPage() {
           )}
 
           {/* Credentials */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-foreground">Credentials</h2>
-              <Button size="sm" onClick={() => setAddCredentialsModalOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add
-              </Button>
+          {credentialsLoading ? (
+            <div className="rounded-xl border border-border bg-card p-6">
+              <div className="animate-pulse space-y-3">
+                <div className="h-4 bg-muted rounded w-1/3" />
+                <div className="h-10 bg-muted rounded" />
+                <div className="h-10 bg-muted rounded" />
+              </div>
             </div>
-
-            {credentialsLoading ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {[...Array(2)].map((_, i) => (
-                  <CardSkeleton key={i} />
-                ))}
-              </div>
-            ) : credentials && credentials.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {credentials.map((cred) => (
-                  <CredentialCard key={cred.id} credential={cred} />
-                ))}
-              </div>
-            ) : (
-              <div className="py-8 text-center">
-                <Key className="mx-auto h-8 w-8 text-muted-foreground/50" />
-                <p className="mt-2 text-sm text-muted-foreground">No credentials stored</p>
-              </div>
-            )}
-          </div>
+          ) : (
+            <CredentialAccordion
+              credentials={credentials || []}
+              onAdd={() => setAddCredentialsModalOpen(true)}
+            />
+          )}
         </motion.div>
 
         {/* Sidebar */}

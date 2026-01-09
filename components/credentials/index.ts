@@ -8,4 +8,5 @@ export { CredentialForm } from './CredentialForm';
 export { MultiCredentialForm } from './MultiCredentialForm';
 export { ProjectCredentialGroup } from './ProjectCredentialGroup';
 export { GroupedCredentialsList } from './GroupedCredentialsList';
+export { CredentialAccordion } from './CredentialAccordion';
 

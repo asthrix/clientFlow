@@ -5,35 +5,30 @@
 // View and manage individual client
 // ============================================
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { pageVariants, fadeUpVariants, cardVariants, modalVariants, overlayVariants } from '@/lib/animations';
-import { PageHeader, StatusBadge, EmptyState, CardSkeleton } from '@/components/shared';
-import { ProjectCard } from '@/components/projects';
+import { pageVariants, fadeUpVariants, modalVariants, overlayVariants } from '@/lib/animations';
+import { EmptyState, CardSkeleton, StatusBadge } from '@/components/shared';
+import { ClientHero, ClientStats, ClientForm } from '@/components/clients';
 import { useClient } from '@/hooks/queries/useClients';
 import { useProjectsByClient } from '@/hooks/queries/useProjects';
-import { useCredentialsByProject } from '@/hooks/queries/useCredentials';
-import { useDeleteClient, useArchiveClient } from '@/hooks/mutations/useClientMutations';
+import { useDeleteClient, useArchiveClient, useUpdateClient } from '@/hooks/mutations/useClientMutations';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import type { ClientStatus } from '@/types';
+import type { Client, ProjectStatus, UpdateClientDTO } from '@/types';
+import { type ClientFormData, transformFormToDTO } from '@/lib/validations/client';
 import {
-  ArrowLeft,
-  Mail,
-  Phone,
   Building2,
-  Globe,
-  MapPin,
-  Calendar,
-  Pencil,
-  Trash2,
-  Archive,
   FolderKanban,
   Plus,
   AlertTriangle,
   Loader2,
-  ExternalLink,
+  ArrowRight,
+  Calendar,
+  MapPin,
+  Tag,
+  X,
 } from 'lucide-react';
 
 export default function ClientDetailPage() {
@@ -50,15 +45,37 @@ export default function ClientDetailPage() {
   // Mutations
   const deleteClient = useDeleteClient();
   const archiveClient = useArchiveClient();
+  const updateClient = useUpdateClient();
 
   // Dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  // Status badge config
-  const statusConfig: Record<ClientStatus, { variant: 'success' | 'warning' | 'error' | 'info' | 'default'; label: string }> = {
-    active: { variant: 'success', label: 'Active' },
-    inactive: { variant: 'default', label: 'Inactive' },
-    archived: { variant: 'warning', label: 'Archived' },
+  // Calculate stats
+  const stats = useMemo(() => {
+    if (!projects) return { total: 0, active: 0, completed: 0, revenue: 0 };
+    
+    const active = projects.filter(p => 
+      ['planning', 'in_progress'].includes(p.status)
+    ).length;
+    
+    const completed = projects.filter(p => p.status === 'completed').length;
+    
+    const revenue = projects.reduce((sum, p) => sum + (p.total_cost || 0), 0);
+    
+    return { total: projects.length, active, completed, revenue };
+  }, [projects]);
+
+  // Project status config
+  const statusConfig: Record<ProjectStatus, { variant: 'success' | 'warning' | 'error' | 'info' | 'default'; label: string }> = {
+    planning: { variant: 'info', label: 'Planning' },
+    in_progress: { variant: 'warning', label: 'In Progress' },
+    under_review: { variant: 'info', label: 'Under Review' },
+    pending_feedback: { variant: 'warning', label: 'Pending Feedback' },
+    completed: { variant: 'success', label: 'Completed' },
+    on_hold: { variant: 'default', label: 'On Hold' },
+    cancelled: { variant: 'error', label: 'Cancelled' },
   };
 
   // Handlers
@@ -71,11 +88,25 @@ export default function ClientDetailPage() {
     await archiveClient.mutateAsync(clientId);
   }, [clientId, archiveClient]);
 
+  const handleEditSubmit = useCallback(async (data: ClientFormData) => {
+    setFormError(null);
+    const dtoData = transformFormToDTO(data);
+    try {
+      await updateClient.mutateAsync({
+        id: clientId,
+        ...dtoData,
+      } as unknown as UpdateClientDTO);
+      setEditModalOpen(false);
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'An error occurred');
+    }
+  }, [clientId, updateClient]);
+
   // Format date
   const formatDate = (dateStr: string | undefined) => {
     if (!dateStr) return 'N/A';
     return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'long',
+      month: 'short',
       day: 'numeric',
       year: 'numeric',
     });
@@ -84,14 +115,13 @@ export default function ClientDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <div className="h-8 w-24 rounded bg-muted animate-pulse" />
-          <div className="h-8 w-48 rounded bg-muted animate-pulse" />
+        <CardSkeleton className="h-48" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <CardSkeleton key={i} className="h-20" />
+          ))}
         </div>
-        <div className="grid gap-6 lg:grid-cols-3">
-          <CardSkeleton className="lg:col-span-2" />
-          <CardSkeleton />
-        </div>
+        <CardSkeleton className="h-64" />
       </div>
     );
   }
@@ -108,8 +138,6 @@ export default function ClientDetailPage() {
     );
   }
 
-  const currentStatus = statusConfig[client.status] || statusConfig.active;
-
   return (
     <motion.div
       variants={pageVariants}
@@ -118,189 +146,172 @@ export default function ClientDetailPage() {
       exit="exit"
       className="space-y-6"
     >
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/clients">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Link>
-          </Button>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-foreground">{client.client_name}</h1>
-              <StatusBadge variant={currentStatus.variant}>
-                {currentStatus.label}
-              </StatusBadge>
-            </div>
-            {client.company_name && (
-              <p className="text-muted-foreground">{client.company_name}</p>
-            )}
-          </div>
-        </div>
+      {/* Hero Section */}
+      <ClientHero
+        client={client}
+        onBack={() => router.push('/clients')}
+        onEdit={() => setEditModalOpen(true)}
+        onDelete={() => setDeleteDialogOpen(true)}
+        onArchive={handleArchive}
+      />
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/clients/${clientId}/edit`}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </Link>
-          </Button>
-          {client.status !== 'archived' && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleArchive}
-              disabled={archiveClient.isPending}
-            >
-              <Archive className="mr-2 h-4 w-4" />
-              Archive
-            </Button>
-          )}
-          <Button 
-            variant="destructive" 
-            size="sm"
-            onClick={() => setDeleteDialogOpen(true)}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
-          </Button>
-        </div>
-      </div>
+      {/* Stats */}
+      <ClientStats
+        totalProjects={stats.total}
+        activeProjects={stats.active}
+        completedProjects={stats.completed}
+        totalRevenue={stats.revenue}
+        currency="INR"
+      />
 
       {/* Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Main Info */}
+        {/* Projects List */}
         <motion.div
           variants={fadeUpVariants}
-          className="lg:col-span-2 space-y-6"
+          className="lg:col-span-2"
         >
-          {/* Contact Information */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h2 className="font-semibold text-foreground mb-4">Contact Information</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {client.email && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
-                    <Mail className="h-5 w-5 text-blue-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Email</p>
-                    <a 
-                      href={`mailto:${client.email}`}
-                      className="text-sm font-medium text-foreground hover:text-primary"
-                    >
-                      {client.email}
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {client.phone && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
-                    <Phone className="h-5 w-5 text-green-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Phone</p>
-                    <a 
-                      href={`tel:${client.phone}`}
-                      className="text-sm font-medium text-foreground hover:text-primary"
-                    >
-                      {client.phone}
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {client.address_line1 && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10">
-                    <MapPin className="h-5 w-5 text-amber-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Address</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {client.address_line1}
-                      {client.city && `, ${client.city}`}
-                      {client.country && `, ${client.country}`}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Projects */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-foreground">Projects</h2>
+          <div className="rounded-xl border border-border bg-card">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <div className="flex items-center gap-2">
+                <FolderKanban className="h-4 w-4 text-muted-foreground" />
+                <h2 className="font-semibold text-foreground">
+                  Projects ({projects?.length || 0})
+                </h2>
+              </div>
               <Button size="sm" asChild>
-                <Link href={`/projects?clientId=${clientId}`}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Project
+                <Link href="/projects">
+                  <Plus className="mr-2 h-3 w-3" />
+                  New
                 </Link>
               </Button>
             </div>
 
             {projectsLoading ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {[...Array(2)].map((_, i) => (
-                  <CardSkeleton key={i} />
+              <div className="p-4 space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="h-16 bg-muted animate-pulse rounded-lg" />
                 ))}
               </div>
             ) : projects && projects.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {projects.map((project) => (
-                  <ProjectCard key={project.id} project={project} />
-                ))}
+              <div className="divide-y divide-border">
+                {projects.map((project) => {
+                  const projectStatus = statusConfig[project.status] || statusConfig.planning;
+                  return (
+                    <Link
+                      key={project.id}
+                      href={`/projects/${project.id}`}
+                      className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-foreground truncate">
+                          {project.project_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {project.project_type} • Started {formatDate(project.start_date)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <StatusBadge variant={projectStatus.variant}>
+                          {projectStatus.label}
+                        </StatusBadge>
+                        {project.progress_percentage !== undefined && (
+                          <div className="w-16 hidden sm:block">
+                            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-primary rounded-full" 
+                                style={{ width: `${project.progress_percentage}%` }} 
+                              />
+                            </div>
+                            <p className="text-xs text-muted-foreground text-center mt-0.5">
+                              {project.progress_percentage}%
+                            </p>
+                          </div>
+                        )}
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             ) : (
-              <div className="py-8 text-center">
-                <FolderKanban className="mx-auto h-8 w-8 text-muted-foreground/50" />
-                <p className="mt-2 text-sm text-muted-foreground">No projects yet</p>
+              <div className="p-8 text-center">
+                <FolderKanban className="mx-auto h-10 w-10 text-muted-foreground/30" />
+                <p className="mt-3 text-sm text-muted-foreground">
+                  No projects yet
+                </p>
+                <Button variant="outline" size="sm" className="mt-3" asChild>
+                  <Link href="/projects">
+                    <Plus className="mr-2 h-3 w-3" />
+                    Create First Project
+                  </Link>
+                </Button>
               </div>
             )}
           </div>
         </motion.div>
 
-        {/* Sidebar */}
-        <motion.div
-          variants={fadeUpVariants}
-          className="space-y-6"
-        >
-          {/* Quick Info */}
+        {/* Sidebar Info */}
+        <motion.div variants={fadeUpVariants} className="space-y-6">
+          {/* Additional Details */}
           <div className="rounded-xl border border-border bg-card p-6">
             <h2 className="font-semibold text-foreground mb-4">Details</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Status</span>
-                <StatusBadge variant={currentStatus.variant} size="sm">
-                  {currentStatus.label}
-                </StatusBadge>
-              </div>
-
-              {client.client_source && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Source</span>
-                  <span className="text-sm font-medium capitalize">{client.client_source}</span>
+            <div className="space-y-3">
+              {client.client_type && (
+                <div className="flex items-center gap-3">
+                  <Tag className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Client Type</p>
+                    <p className="text-sm font-medium capitalize">{client.client_type}</p>
+                  </div>
                 </div>
               )}
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Projects</span>
-                <span className="text-sm font-medium">{projects?.length || 0}</span>
-              </div>
-
-              <div className="border-t border-border pt-4 mt-4">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Calendar className="h-3 w-3" />
-                  <span>Added {formatDate(client.created_at)}</span>
+              {client.client_source && (
+                <div className="flex items-center gap-3">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Source</p>
+                    <p className="text-sm font-medium capitalize">{client.client_source}</p>
+                  </div>
+                </div>
+              )}
+              {(client.city || client.country) && (
+                <div className="flex items-center gap-3">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Location</p>
+                    <p className="text-sm font-medium">
+                      {[client.city, client.country].filter(Boolean).join(', ')}
+                    </p>
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center gap-3">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Added</p>
+                  <p className="text-sm font-medium">{formatDate(client.created_at)}</p>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Tags */}
+          {client.tags && client.tags.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-6">
+              <h2 className="font-semibold text-foreground mb-3">Tags</h2>
+              <div className="flex flex-wrap gap-2">
+                {client.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Notes */}
           {client.notes && (
@@ -313,6 +324,48 @@ export default function ClientDetailPage() {
           )}
         </motion.div>
       </div>
+
+      {/* Edit Modal */}
+      <AnimatePresence>
+        {editModalOpen && (
+          <>
+            <motion.div
+              variants={overlayVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              onClick={() => setEditModalOpen(false)}
+              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+            />
+            <motion.div
+              variants={modalVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="fixed inset-x-4 top-[2%] z-50 mx-auto max-w-2xl max-h-[96vh] overflow-auto rounded-2xl border border-border bg-card shadow-2xl sm:inset-x-auto"
+            >
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 backdrop-blur px-6 py-4">
+                <h2 className="text-xl font-semibold text-foreground">Edit Client</h2>
+                <button
+                  onClick={() => setEditModalOpen(false)}
+                  className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="p-6">
+                <ClientForm
+                  client={client}
+                  onSubmit={handleEditSubmit}
+                  onCancel={() => setEditModalOpen(false)}
+                  isLoading={updateClient.isPending}
+                  error={formError}
+                />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Delete Confirmation Dialog */}
       <AnimatePresence>
