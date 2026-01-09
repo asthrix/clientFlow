@@ -2,7 +2,7 @@
 
 // ============================================
 // ClientFlow CRM - Client Form Component
-// Reusable form for creating and editing clients
+// Clean, professional form for creating/editing clients
 // ============================================
 
 import { useEffect } from 'react';
@@ -17,38 +17,19 @@ import {
   clientStatusValues,
   type ClientFormData,
 } from '@/lib/validations/client';
-import { 
-  fadeUpVariants, 
-  fieldErrorVariants,
-  shakeVariants,
-} from '@/lib/animations';
+import { fadeUpVariants, fieldErrorVariants } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { Client } from '@/types';
-import {
-  User,
-  Building2,
-  Mail,
-  Phone,
-  MapPin,
-  Tag,
-  Loader2,
-  Save,
-  X,
-} from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 interface ClientFormProps {
-  /** Client data for editing, undefined for new client */
   client?: Client;
-  /** Submit handler */
   onSubmit: (data: ClientFormData) => Promise<void>;
-  /** Cancel handler */
   onCancel?: () => void;
-  /** Loading state */
   isLoading?: boolean;
-  /** Error message */
   error?: string | null;
 }
 
@@ -82,8 +63,6 @@ export function ClientForm({
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
     reset,
     formState: { errors, isDirty },
   } = useForm<ClientFormData>({
@@ -110,9 +89,6 @@ export function ClientForm({
     } : defaultClientValues,
   });
 
-  const clientType = watch('client_type');
-
-  // Reset form when client changes
   useEffect(() => {
     if (client) {
       reset({
@@ -153,291 +129,207 @@ export function ClientForm({
       <AnimatePresence>
         {error && (
           <motion.div
-            variants={shakeVariants}
-            initial="initial"
-            animate="shake"
-            exit="exit"
-            className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive"
           >
+            <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Basic Information */}
+      {/* Contact Information Section */}
       <div className="space-y-4">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-          Basic Information
-        </h3>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          {/* Client Name */}
-          <div className="space-y-2">
-            <Label htmlFor="client_name">Client Name *</Label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <h3 className="text-sm font-medium text-foreground">Contact Information</h3>
+        
+        <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* Client Name */}
+            <div className="space-y-1.5">
+              <Label htmlFor="client_name" className="text-sm">Name <span className="text-destructive">*</span></Label>
               <Input
                 id="client_name"
                 placeholder="John Doe"
-                className="pl-10"
                 {...register('client_name')}
+                className={errors.client_name ? 'border-destructive' : ''}
               />
+              <AnimatePresence>
+                {errors.client_name && (
+                  <motion.p variants={fieldErrorVariants} initial="initial" animate="animate" exit="exit" className="text-xs text-destructive">
+                    {errors.client_name.message}
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </div>
-            <AnimatePresence>
-              {errors.client_name && (
-                <motion.p
-                  variants={fieldErrorVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  className="text-xs text-destructive"
-                >
-                  {errors.client_name.message}
-                </motion.p>
-              )}
-            </AnimatePresence>
-          </div>
 
-          {/* Company Name */}
-          <div className="space-y-2">
-            <Label htmlFor="company_name">Company Name</Label>
-            <div className="relative">
-              <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            {/* Company Name */}
+            <div className="space-y-1.5">
+              <Label htmlFor="company_name" className="text-sm">Company</Label>
               <Input
                 id="company_name"
                 placeholder="Acme Inc."
-                className="pl-10"
                 {...register('company_name')}
               />
             </div>
-          </div>
 
-          {/* Email */}
-          <div className="space-y-2">
-            <Label htmlFor="email">Email Address *</Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            {/* Email */}
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-sm">Email <span className="text-destructive">*</span></Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="john@example.com"
-                className="pl-10"
                 {...register('email')}
+                className={errors.email ? 'border-destructive' : ''}
               />
+              <AnimatePresence>
+                {errors.email && (
+                  <motion.p variants={fieldErrorVariants} initial="initial" animate="animate" exit="exit" className="text-xs text-destructive">
+                    {errors.email.message}
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </div>
-            <AnimatePresence>
-              {errors.email && (
-                <motion.p
-                  variants={fieldErrorVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  className="text-xs text-destructive"
-                >
-                  {errors.email.message}
-                </motion.p>
-              )}
-            </AnimatePresence>
-          </div>
 
-          {/* Phone */}
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            {/* Phone */}
+            <div className="space-y-1.5">
+              <Label htmlFor="phone" className="text-sm">Phone</Label>
               <Input
                 id="phone"
                 type="tel"
                 placeholder="+1 (555) 123-4567"
-                className="pl-10"
                 {...register('phone')}
               />
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Client Type */}
-          <div className="space-y-2">
-            <Label htmlFor="client_type">Client Type *</Label>
-            <select
-              id="client_type"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              {...register('client_type')}
-            >
-              {clientTypeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <AnimatePresence>
-              {errors.client_type && (
-                <motion.p
-                  variants={fieldErrorVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  className="text-xs text-destructive"
-                >
-                  {errors.client_type.message}
-                </motion.p>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Client Source */}
-          <div className="space-y-2">
-            <Label htmlFor="client_source">How did they find you?</Label>
-            <select
-              id="client_source"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              {...register('client_source')}
-            >
-              {clientSourceOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Status (only for editing) */}
-          {isEditing && (
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
+      {/* Details Section */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium text-foreground">Details</h3>
+        
+        <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* Client Type */}
+            <div className="space-y-1.5">
+              <Label htmlFor="client_type" className="text-sm">Client Type <span className="text-destructive">*</span></Label>
               <select
-                id="status"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                {...register('status')}
+                id="client_type"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                {...register('client_type')}
               >
-                {clientStatusOptions.map((option) => (
+                {clientTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
               </select>
             </div>
-          )}
+
+            {/* Client Source */}
+            <div className="space-y-1.5">
+              <Label htmlFor="client_source" className="text-sm">Source</Label>
+              <select
+                id="client_source"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                {...register('client_source')}
+              >
+                {clientSourceOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Status (only for editing) */}
+            {isEditing && (
+              <div className="space-y-1.5">
+                <Label htmlFor="status" className="text-sm">Status</Label>
+                <select
+                  id="status"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  {...register('status')}
+                >
+                  {clientStatusOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Address Information */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-          Address
-        </h3>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="address_line1">Street Address</Label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="address_line1"
-                placeholder="123 Main Street"
-                className="pl-10"
-                {...register('address_line1')}
-              />
+      {/* Address Section (Collapsible) */}
+      <details className="group">
+        <summary className="text-sm font-medium text-foreground cursor-pointer list-none flex items-center gap-2 py-2">
+          <span className="text-muted-foreground transition-transform group-open:rotate-90">▶</span>
+          Address (Optional)
+        </summary>
+        
+        <div className="rounded-xl border border-border bg-muted/30 p-4 mt-2 space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="address_line1" className="text-sm">Street Address</Label>
+              <Input id="address_line1" placeholder="123 Main Street" {...register('address_line1')} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="city" className="text-sm">City</Label>
+              <Input id="city" placeholder="New York" {...register('city')} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="state" className="text-sm">State</Label>
+              <Input id="state" placeholder="NY" {...register('state')} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="country" className="text-sm">Country</Label>
+              <Input id="country" placeholder="United States" {...register('country')} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="postal_code" className="text-sm">Postal Code</Label>
+              <Input id="postal_code" placeholder="10001" {...register('postal_code')} />
             </div>
           </div>
-
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="address_line2">Address Line 2</Label>
-            <Input
-              id="address_line2"
-              placeholder="Apt, Suite, Building (optional)"
-              {...register('address_line2')}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="city">City</Label>
-            <Input
-              id="city"
-              placeholder="New York"
-              {...register('city')}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="state">State / Province</Label>
-            <Input
-              id="state"
-              placeholder="NY"
-              {...register('state')}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="country">Country</Label>
-            <Input
-              id="country"
-              placeholder="United States"
-              {...register('country')}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="postal_code">Postal Code</Label>
-            <Input
-              id="postal_code"
-              placeholder="10001"
-              {...register('postal_code')}
-            />
-          </div>
         </div>
-      </div>
+      </details>
 
-      {/* Notes */}
+      {/* Notes Section */}
       <div className="space-y-4">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-          Additional Notes
-        </h3>
-
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes</Label>
+        <h3 className="text-sm font-medium text-foreground">Notes</h3>
+        
+        <div className="rounded-xl border border-border bg-muted/30 p-4">
           <Textarea
             id="notes"
             placeholder="Any additional information about this client..."
-            rows={4}
+            rows={3}
             {...register('notes')}
           />
         </div>
       </div>
 
       {/* Form Actions */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t">
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
         {onCancel && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isLoading}
-          >
-            <X className="mr-2 h-4 w-4" />
+          <Button type="button" variant="ghost" onClick={onCancel} disabled={isLoading}>
             Cancel
           </Button>
         )}
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <Button
-            type="submit"
-            disabled={isLoading || (!isDirty && isEditing)}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isEditing ? 'Saving...' : 'Creating...'}
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                {isEditing ? 'Save Changes' : 'Create Client'}
-              </>
-            )}
-          </Button>
-        </motion.div>
+        <Button type="submit" disabled={isLoading || (!isDirty && isEditing)}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {isEditing ? 'Saving...' : 'Creating...'}
+            </>
+          ) : (
+            isEditing ? 'Save Changes' : 'Create Client'
+          )}
+        </Button>
       </div>
     </motion.form>
   );

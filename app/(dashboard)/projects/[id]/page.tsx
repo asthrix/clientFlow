@@ -10,7 +10,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { pageVariants, fadeUpVariants, modalVariants, overlayVariants } from '@/lib/animations';
-import { StatusBadge, EmptyState, CardSkeleton } from '@/components/shared';
+import { StatusBadge, EmptyState, CardSkeleton, Modal } from '@/components/shared';
 import { CredentialAccordion, MultiCredentialForm } from '@/components/credentials';
 import { MilestoneTracker, ProjectForm } from '@/components/projects';
 import { useProject } from '@/hooks/queries/useProjects';
@@ -432,86 +432,36 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* Add Credentials Modal */}
-      <AnimatePresence>
-        {addCredentialsModalOpen && (
-          <>
-            <motion.div
-              variants={overlayVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              onClick={() => setAddCredentialsModalOpen(false)}
-              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
-            />
-            <motion.div
-              variants={modalVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="fixed inset-x-4 top-[3%] z-50 mx-auto max-w-2xl max-h-[94vh] overflow-auto rounded-2xl border border-border bg-card shadow-2xl sm:inset-x-auto"
-            >
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 backdrop-blur px-6 py-4">
-                <h2 className="text-xl font-semibold text-foreground">Add Credentials</h2>
-                <button
-                  onClick={() => setAddCredentialsModalOpen(false)}
-                  className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              <div className="p-6">
-                <MultiCredentialForm
-                  projectId={projectId}
-                  onSuccess={() => setAddCredentialsModalOpen(false)}
-                  onCancel={() => setAddCredentialsModalOpen(false)}
-                />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      <Modal
+        isOpen={addCredentialsModalOpen}
+        onClose={() => setAddCredentialsModalOpen(false)}
+        title="Add Credentials"
+        size="lg"
+      >
+        <MultiCredentialForm
+          projectId={projectId}
+          onSuccess={() => setAddCredentialsModalOpen(false)}
+          onCancel={() => setAddCredentialsModalOpen(false)}
+        />
+      </Modal>
 
       {/* Edit Modal */}
-      <AnimatePresence>
-        {editModalOpen && project && (
-          <>
-            <motion.div
-              variants={overlayVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              onClick={() => setEditModalOpen(false)}
-              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
-            />
-            <motion.div
-              variants={modalVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="fixed inset-x-4 top-[2%] z-50 mx-auto max-w-3xl max-h-[96vh] overflow-auto rounded-2xl border border-border bg-card shadow-2xl sm:inset-x-auto"
-            >
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 backdrop-blur px-6 py-4">
-                <h2 className="text-xl font-semibold text-foreground">Edit Project</h2>
-                <button
-                  onClick={() => setEditModalOpen(false)}
-                  className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              <div className="p-6">
-                <ProjectForm
-                  project={project}
-                  onSubmit={handleEditSubmit}
-                  onCancel={() => setEditModalOpen(false)}
-                  isLoading={updateProject.isPending}
-                  error={formError}
-                />
-              </div>
-            </motion.div>
-          </>
+      <Modal
+        isOpen={editModalOpen && !!project}
+        onClose={() => setEditModalOpen(false)}
+        title="Edit Project"
+        size="xl"
+      >
+        {project && (
+          <ProjectForm
+            project={project}
+            onSubmit={handleEditSubmit}
+            onCancel={() => setEditModalOpen(false)}
+            isLoading={updateProject.isPending}
+            error={formError}
+          />
         )}
-      </AnimatePresence>
+      </Modal>
 
       {/* Delete Dialog */}
       <AnimatePresence>

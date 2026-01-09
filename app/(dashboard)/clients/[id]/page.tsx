@@ -10,7 +10,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { pageVariants, fadeUpVariants, modalVariants, overlayVariants } from '@/lib/animations';
-import { EmptyState, CardSkeleton, StatusBadge } from '@/components/shared';
+import { EmptyState, CardSkeleton, StatusBadge, Modal } from '@/components/shared';
 import { ClientForm } from '@/components/clients';
 import { useClient } from '@/hooks/queries/useClients';
 import { useProjectsByClient } from '@/hooks/queries/useProjects';
@@ -153,7 +153,7 @@ export default function ClientDetailPage() {
       initial="initial"
       animate="animate"
       exit="exit"
-      className="max-w-7xl mx-auto space-y-6"
+      className="lg:max-w-7xl max-w-4xl mx-auto space-y-6"
     >
       {/* Back Link */}
       <Link
@@ -320,46 +320,20 @@ export default function ClientDetailPage() {
       </div>
 
       {/* Edit Modal */}
-      <AnimatePresence>
-        {editModalOpen && (
-          <>
-            <motion.div
-              variants={overlayVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              onClick={() => setEditModalOpen(false)}
-              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
-            />
-            <motion.div
-              variants={modalVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="fixed inset-x-4 top-[2%] z-50 mx-auto max-w-2xl max-h-[96vh] overflow-auto rounded-2xl border border-border bg-card shadow-2xl sm:inset-x-auto"
-            >
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 backdrop-blur px-6 py-4">
-                <h2 className="text-xl font-semibold text-foreground">Edit Client</h2>
-                <button
-                  onClick={() => setEditModalOpen(false)}
-                  className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              <div className="p-6">
-                <ClientForm
-                  client={client}
-                  onSubmit={handleEditSubmit}
-                  onCancel={() => setEditModalOpen(false)}
-                  isLoading={updateClient.isPending}
-                  error={formError}
-                />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      <Modal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        title="Edit Client"
+        size="lg"
+      >
+        <ClientForm
+          client={client}
+          onSubmit={handleEditSubmit}
+          onCancel={() => setEditModalOpen(false)}
+          isLoading={updateClient.isPending}
+          error={formError}
+        />
+      </Modal>
 
       {/* Delete Dialog */}
       <AnimatePresence>

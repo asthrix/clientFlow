@@ -25,3 +25,4 @@ export {
   PaymentStatusBadge, 
   ClientStatusBadge,
 } from './StatusBadge';
+export { Modal } from './Modal';

@@ -8,13 +8,12 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { pageVariants, modalVariants, overlayVariants } from '@/lib/animations';
-import { PageHeader } from '@/components/shared';
+import { pageVariants } from '@/lib/animations';
+import { PageHeader, Modal } from '@/components/shared';
 import { ProjectList, ProjectForm, UnifiedProjectWizard } from '@/components/projects';
 import { useUpdateProject } from '@/hooks/mutations/useProjectMutations';
 import type { Project, UpdateProjectDTO } from '@/types';
 import { type ProjectFormData, transformProjectFormToDTO } from '@/lib/validations/project';
-import { X } from 'lucide-react';
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -50,7 +49,6 @@ export default function ProjectsPage() {
   }, []);
 
   const handleWizardSuccess = useCallback((projectId: string) => {
-    // Navigate to the new project's detail page
     router.push(`/projects/${projectId}`);
   }, [router]);
 
@@ -59,7 +57,6 @@ export default function ProjectsPage() {
 
     if (!editingProject) return;
 
-    // Transform form data to DTO format
     const dtoData = transformProjectFormToDTO(data);
 
     try {
@@ -105,55 +102,22 @@ export default function ProjectsPage() {
       </AnimatePresence>
 
       {/* Edit Project Form Modal */}
-      <AnimatePresence>
-        {isEditFormOpen && editingProject && (
-          <>
-            {/* Overlay */}
-            <motion.div
-              variants={overlayVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
-              onClick={handleCloseEditForm}
-            />
-
-            {/* Modal */}
-            <motion.div
-              variants={modalVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="fixed inset-x-4 top-[2%] z-50 mx-auto max-w-3xl max-h-[96vh] overflow-auto rounded-2xl border border-border bg-card shadow-2xl sm:inset-x-auto"
-            >
-              {/* Modal Header */}
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 backdrop-blur px-6 py-4">
-                <h2 className="text-xl font-semibold text-foreground">
-                  Edit Project
-                </h2>
-                <button
-                  onClick={handleCloseEditForm}
-                  className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Modal Body */}
-              <div className="p-6">
-                <ProjectForm
-                  project={editingProject}
-                  onSubmit={handleEditSubmit}
-                  onCancel={handleCloseEditForm}
-                  isLoading={isSubmitting}
-                  error={formError}
-                />
-              </div>
-            </motion.div>
-          </>
+      <Modal
+        isOpen={isEditFormOpen && !!editingProject}
+        onClose={handleCloseEditForm}
+        title="Edit Project"
+        size="xl"
+      >
+        {editingProject && (
+          <ProjectForm
+            project={editingProject}
+            onSubmit={handleEditSubmit}
+            onCancel={handleCloseEditForm}
+            isLoading={isSubmitting}
+            error={formError}
+          />
         )}
-      </AnimatePresence>
+      </Modal>
     </motion.div>
   );
 }
-

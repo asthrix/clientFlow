@@ -7,8 +7,8 @@
 
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { fadeUpVariants, modalVariants, overlayVariants, shakeVariants } from '@/lib/animations';
-import { WizardStepIndicator } from '@/components/shared';
+import { fadeUpVariants, shakeVariants } from '@/lib/animations';
+import { WizardStepIndicator, Modal } from '@/components/shared';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -291,61 +291,37 @@ export function UnifiedProjectWizard({
   if (!isOpen) return null;
 
   return (
-    <>
-      {/* Overlay */}
-      <motion.div
-        variants={overlayVariants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        onClick={handleClose}
-        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
-      />
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Create New Project"
+      size="lg"
+    >
+      {/* Step Indicator */}
+      <div className="-mt-2 mb-6 flex justify-center w-full">
+        <WizardStepIndicator
+          steps={WIZARD_STEPS}
+          currentStep={currentStep}
+          onStepClick={(step) => {
+            if (step < currentStep) setCurrentStep(step);
+          }}
+        />
+      </div>
 
-      {/* Modal */}
-      <motion.div
-        variants={modalVariants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        className="fixed inset-x-4 top-[3%] z-50 mx-auto max-w-2xl max-h-[94vh] overflow-auto rounded-2xl border border-border bg-card shadow-2xl sm:inset-x-auto"
-      >
-        {/* Header */}
-        <div className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur px-6 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-foreground">Create New Project</h2>
-            <button
-              onClick={handleClose}
-              className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <WizardStepIndicator
-            steps={WIZARD_STEPS}
-            currentStep={currentStep}
-            onStepClick={(step) => {
-              if (step < currentStep) setCurrentStep(step);
-            }}
-          />
-        </div>
-
-        {/* Content */}
-        <div className="p-6">
-          {/* Error Alert */}
-          <AnimatePresence>
-            {error && (
-              <motion.div
-                variants={shakeVariants}
-                initial="initial"
-                animate="shake"
-                exit="exit"
-                className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive"
-              >
-                {error}
-              </motion.div>
-            )}
-          </AnimatePresence>
+      {/* Error Alert */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            variants={shakeVariants}
+            initial="initial"
+            animate="shake"
+            exit="exit"
+            className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive"
+          >
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
           <AnimatePresence mode="wait">
             {/* Step 1: Client */}
@@ -770,10 +746,9 @@ export function UnifiedProjectWizard({
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 border-t border-border bg-card/95 backdrop-blur px-6 py-4 flex justify-between">
+        <div className="flex justify-between pt-4 border-t border-border mt-6">
           <Button
             type="button"
             variant="outline"
@@ -825,7 +800,6 @@ export function UnifiedProjectWizard({
             </Button>
           )}
         </div>
-      </motion.div>
-    </>
+    </Modal>
   );
 }

@@ -6,14 +6,13 @@
 // ============================================
 
 import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { pageVariants, modalVariants, overlayVariants } from '@/lib/animations';
-import { PageHeader } from '@/components/shared';
+import { motion } from 'framer-motion';
+import { pageVariants } from '@/lib/animations';
+import { PageHeader, Modal } from '@/components/shared';
 import { ClientList, ClientForm } from '@/components/clients';
 import { useCreateClient, useUpdateClient } from '@/hooks/mutations/useClientMutations';
 import type { Client, CreateClientDTO, UpdateClientDTO } from '@/types';
 import { type ClientFormData, transformFormToDTO } from '@/lib/validations/client';
-import { X } from 'lucide-react';
 
 export default function ClientsPage() {
   // Modal state
@@ -88,54 +87,20 @@ export default function ClientsPage() {
       />
 
       {/* Client Form Modal */}
-      <AnimatePresence>
-        {isFormOpen && (
-          <>
-            {/* Overlay */}
-            <motion.div
-              variants={overlayVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
-              onClick={handleCloseForm}
-            />
-
-            {/* Modal */}
-            <motion.div
-              variants={modalVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="fixed inset-x-4 top-[5%] z-50 mx-auto max-w-2xl max-h-[90vh] overflow-auto rounded-2xl border border-border bg-card shadow-2xl sm:inset-x-auto"
-            >
-              {/* Modal Header */}
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 backdrop-blur px-6 py-4">
-                <h2 className="text-xl font-semibold text-foreground">
-                  {editingClient ? 'Edit Client' : 'Add New Client'}
-                </h2>
-                <button
-                  onClick={handleCloseForm}
-                  className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Modal Body */}
-              <div className="p-6">
-                <ClientForm
-                  client={editingClient || undefined}
-                  onSubmit={handleSubmit}
-                  onCancel={handleCloseForm}
-                  isLoading={isSubmitting}
-                  error={formError}
-                />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      <Modal
+        isOpen={isFormOpen}
+        onClose={handleCloseForm}
+        title={editingClient ? 'Edit Client' : 'Add New Client'}
+        size="lg"
+      >
+        <ClientForm
+          client={editingClient || undefined}
+          onSubmit={handleSubmit}
+          onCancel={handleCloseForm}
+          isLoading={isSubmitting}
+          error={formError}
+        />
+      </Modal>
     </motion.div>
   );
 }
