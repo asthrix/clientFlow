@@ -129,7 +129,7 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
 
   // Generate avatar color
   const getAvatarColor = (name: string) => {
-    const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-amber-500', 'bg-rose-500'];
+    const colors = ['bg-primary'];
     return colors[name.charCodeAt(0) % colors.length];
   };
 
@@ -226,7 +226,7 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
       >
         <div className="rounded-xl border border-border bg-card p-3 sm:p-4 flex sm:block items-center justify-between">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Clients</p>
-          <p className="text-xl sm:text-2xl font-bold text-foreground sm:mt-1">{summaryStats.totalClients}</p>
+          <p className="text-xl sm:text-2xl font-bold text-primary sm:mt-1">{summaryStats.totalClients}</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-3 sm:p-4 flex sm:block items-center justify-between">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Projects</p>
@@ -234,7 +234,7 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
         </div>
         <div className="rounded-xl border border-border bg-card p-3 sm:p-4 flex sm:block items-center justify-between">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Revenue</p>
-          <p className="text-xl sm:text-2xl font-bold text-emerald-500 sm:mt-1">{formatCurrency(summaryStats.totalRevenue)}</p>
+          <p className="text-xl sm:text-2xl font-bold text-primary sm:mt-1">{formatCurrency(summaryStats.totalRevenue)}</p>
         </div>
       </motion.div>
 
@@ -289,7 +289,7 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
                     {' '}project{(client.project_count || 0) !== 1 ? 's' : ''}
                   </span>
                   {(client.total_revenue || 0) > 0 ? (
-                    <span className="font-semibold text-emerald-500">
+                    <span className="font-semibold text-primary">
                       {formatCurrency(client.total_revenue || 0)}
                     </span>
                   ) : (
@@ -308,11 +308,11 @@ export function ClientList({ onAddClient, onEditClient }: ClientListProps) {
                 {/* Desktop: Total Spend */}
                 <div className="hidden sm:block col-span-4 text-right">
                   {(client.total_revenue || 0) > 0 ? (
-                    <span className="font-semibold text-emerald-500">
+                    <span className="font-semibold text-primary">
                       {formatCurrency(client.total_revenue || 0)}
                     </span>
                   ) : (
-                    <span className="text-muted-foreground">$0</span>
+                    <span className="text-muted-foreground">₹0</span>
                   )}
                 </div>
               </Link>

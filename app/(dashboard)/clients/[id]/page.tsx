@@ -119,7 +119,7 @@ export default function ClientDetailPage() {
 
   // Generate avatar color
   const getAvatarColor = (name: string) => {
-    const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-amber-500', 'bg-rose-500'];
+    const colors = ['bg-primary'];
     return colors[name.charCodeAt(0) % colors.length];
   };
 
@@ -223,7 +223,7 @@ export default function ClientDetailPage() {
           </div>
           <div className="flex sm:block items-center justify-between">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Spend</p>
-            <p className="text-base sm:text-lg font-semibold text-emerald-500 sm:mt-1">{formatCurrency(totals.totalSpend)}</p>
+            <p className="text-base sm:text-lg font-semibold text-primary sm:mt-1">{formatCurrency(totals.totalSpend)}</p>
           </div>
         </div>
       </motion.div>
@@ -298,15 +298,15 @@ export default function ClientDetailPage() {
                         <p className="text-xs text-muted-foreground">{formatDate(project.actual_completion_date || project.start_date)}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-emerald-500" />
-                        <span className="font-medium text-emerald-500">{formatCurrency(project.total_cost || 0)}</span>
+                        <Check className="h-4 w-4 text-primary" />
+                        <span className="font-medium text-primary">{formatCurrency(project.total_cost || 0)}</span>
                       </div>
                     </div>
                   ))}
                 </div>
                 <div className="flex items-center justify-between p-4 border-t border-border bg-muted/30">
                   <span className="font-medium text-foreground">Total</span>
-                  <span className="font-bold text-emerald-500">{formatCurrency(totals.totalSpend)}</span>
+                  <span className="font-bold text-primary">{formatCurrency(totals.totalSpend)}</span>
                 </div>
               </>
             ) : (
