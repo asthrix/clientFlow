@@ -1,0 +1,418 @@
+'use client';
+
+// ============================================
+// ClientFlow CRM - Milestone Tracker Component
+// Visual progress tracker for project milestones
+// ============================================
+
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { fadeUpVariants } from '@/lib/animations';
+import { Button } from '@/components/ui/button';
+import { useProjectMilestones } from '@/hooks/queries/useMilestones';
+import { useUpdateMilestone, useToggleSubTask, useInitializeMilestones } from '@/hooks/mutations/useMilestoneMutations';
+import {
+  MilestoneLabels,
+  MilestoneSubTasks,
+  DefaultMilestonesByProjectType,
+} from '@/types/milestone.types';
+import type {
+  MilestoneWithSubTasks,
+  MilestoneType,
+  SubTaskDefinition,
+  ProjectType,
+} from '@/types';
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Loader2,
+  Palette,
+  Layout,
+  Server,
+  Database,
+  Globe,
+  Cloud,
+  TestTube,
+  Rocket,
+  Plus,
+  Sparkles,
+} from 'lucide-react';
+
+// Icon mapping
+const MilestoneIconComponents: Record<MilestoneType, React.ComponentType<{ className?: string }>> = {
+  design: Palette,
+  frontend: Layout,
+  backend: Server,
+  database: Database,
+  domain: Globe,
+  hosting: Cloud,
+  testing: TestTube,
+  deployment: Rocket,
+};
+
+// Project type options
+const PROJECT_TYPE_OPTIONS: { value: ProjectType; label: string }[] = [
+  { value: 'landing_page', label: 'Landing Page' },
+  { value: 'website', label: 'Website' },
+  { value: 'web_app', label: 'Web App' },
+  { value: 'ecommerce', label: 'E-Commerce' },
+  { value: 'mobile_app', label: 'Mobile App' },
+  { value: 'api', label: 'API' },
+  { value: 'maintenance', label: 'Maintenance' },
+  { value: 'other', label: 'Other' },
+];
+
+interface MilestoneTrackerProps {
+  projectId: string;
+  projectType?: ProjectType;
+}
+
+export function MilestoneTracker({ projectId, projectType = 'website' }: MilestoneTrackerProps) {
+  const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(new Set());
+  const [selectedType, setSelectedType] = useState<ProjectType>(projectType);
+  const [isInitializing, setIsInitializing] = useState(false);
+  
+  const { data: milestones, isLoading, error, refetch } = useProjectMilestones(projectId);
+  const updateMilestone = useUpdateMilestone();
+  const toggleSubTask = useToggleSubTask();
+  const initializeMilestones = useInitializeMilestones();
+
+  // Calculate overall progress
+  const calculateOverallProgress = () => {
+    if (!milestones || milestones.length === 0) return 0;
+    const applicable = milestones.filter((m) => m.is_applicable);
+    if (applicable.length === 0) return 0;
+    
+    const progressSum = applicable.reduce((sum, m) => {
+      return sum + (m.is_completed ? 100 : m.progress);
+    }, 0);
+    
+    return Math.round(progressSum / applicable.length);
+  };
+
+  // Initialize milestones for this project
+  const handleInitialize = async () => {
+    setIsInitializing(true);
+    try {
+      await initializeMilestones.mutateAsync({
+        project_id: projectId,
+        project_type: selectedType,
+      });
+      refetch();
+    } catch (err) {
+      console.error('Failed to initialize milestones:', err);
+    } finally {
+      setIsInitializing(false);
+    }
+  };
+
+  // Toggle milestone expansion
+  const toggleExpanded = (milestoneId: string) => {
+    setExpandedMilestones((prev) => {
+      const next = new Set(prev);
+      if (next.has(milestoneId)) {
+        next.delete(milestoneId);
+      } else {
+        next.add(milestoneId);
+      }
+      return next;
+    });
+  };
+
+  // Toggle milestone completion
+  const handleToggleMilestone = async (milestone: MilestoneWithSubTasks) => {
+    await updateMilestone.mutateAsync({
+      id: milestone.id,
+      is_completed: !milestone.is_completed,
+      project_id: projectId,
+    });
+  };
+
+  // Toggle sub-task completion
+  const handleToggleSubTask = async (subTaskId: string, isCompleted: boolean) => {
+    await toggleSubTask.mutateAsync({
+      subTaskId,
+      isCompleted: !isCompleted,
+      projectId,
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-6">
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show initialization UI if no milestones
+  if (!milestones || milestones.length === 0) {
+    const defaultMilestones = DefaultMilestonesByProjectType[selectedType] || [];
+    
+    return (
+      <motion.div
+        variants={fadeUpVariants}
+        initial="initial"
+        animate="animate"
+        className="rounded-xl border border-border bg-card p-6"
+      >
+        <div className="text-center space-y-4">
+          <div className="flex items-center justify-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+              <Sparkles className="h-7 w-7 text-primary" />
+            </div>
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground">Set Up Project Milestones</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Track progress automatically by adding development milestones
+            </p>
+          </div>
+          
+          {/* Project type selector */}
+          <div className="max-w-xs mx-auto space-y-2">
+            <label className="text-xs text-muted-foreground">Project Type</label>
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value as ProjectType)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              {PROJECT_TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          
+          {/* Preview of milestones that will be created */}
+          <div className="flex flex-wrap justify-center gap-2 py-2">
+            {defaultMilestones.map((type) => (
+              <span
+                key={type}
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-xs text-muted-foreground"
+              >
+                {MilestoneLabels[type]}
+              </span>
+            ))}
+          </div>
+          
+          <Button
+            onClick={handleInitialize}
+            disabled={isInitializing}
+            className="mt-2"
+          >
+            {isInitializing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Initializing...
+              </>
+            ) : (
+              <>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Milestones
+              </>
+            )}
+          </Button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  const overallProgress = calculateOverallProgress();
+  const applicableMilestones = milestones.filter((m) => m.is_applicable);
+
+  return (
+    <motion.div
+      variants={fadeUpVariants}
+      initial="initial"
+      animate="animate"
+      className="rounded-xl border border-border bg-card overflow-hidden"
+    >
+      {/* Header with progress bar */}
+      <div className="border-b border-border p-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-semibold text-foreground">Project Progress</h3>
+          <span className="text-2xl font-bold text-primary">{overallProgress}%</span>
+        </div>
+        <div className="h-3 w-full rounded-full bg-muted overflow-hidden">
+          <motion.div
+            className="h-full bg-linear-to-r from-primary to-primary/80 rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${overallProgress}%` }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          />
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {applicableMilestones.filter((m) => m.is_completed).length} of {applicableMilestones.length} milestones completed
+        </p>
+      </div>
+
+      {/* Milestone list */}
+      <div className="divide-y divide-border">
+        {applicableMilestones.map((milestone) => {
+          const Icon = MilestoneIconComponents[milestone.milestone_type as MilestoneType] || Rocket;
+          const isExpanded = expandedMilestones.has(milestone.id);
+          const subTaskDefs = MilestoneSubTasks[milestone.milestone_type as MilestoneType] || [];
+
+          return (
+            <div key={milestone.id}>
+              {/* Milestone row */}
+              <div
+                className={`flex items-center gap-3 p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
+                  milestone.is_completed ? 'bg-primary/5' : ''
+                }`}
+                onClick={() => toggleExpanded(milestone.id)}
+              >
+                {/* Expand/collapse icon */}
+                <button
+                  className="text-muted-foreground"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleExpanded(milestone.id);
+                  }}
+                >
+                  {isExpanded ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </button>
+
+                {/* Completion checkbox */}
+                <button
+                  className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
+                    milestone.is_completed
+                      ? 'bg-primary border-primary text-primary-foreground'
+                      : 'border-muted-foreground/30 hover:border-primary'
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleMilestone(milestone);
+                  }}
+                  disabled={updateMilestone.isPending}
+                >
+                  {milestone.is_completed && <Check className="h-3.5 w-3.5" />}
+                </button>
+
+                {/* Icon */}
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                    milestone.is_completed ? 'bg-primary/10' : 'bg-muted'
+                  }`}
+                >
+                  <Icon
+                    className={`h-4 w-4 ${
+                      milestone.is_completed ? 'text-primary' : 'text-muted-foreground'
+                    }`}
+                  />
+                </div>
+
+                {/* Label and progress */}
+                <div className="flex-1 min-w-0">
+                  <p
+                    className={`font-medium ${
+                      milestone.is_completed ? 'text-primary' : 'text-foreground'
+                    }`}
+                  >
+                    {MilestoneLabels[milestone.milestone_type as MilestoneType]}
+                  </p>
+                  {!milestone.is_completed && milestone.sub_tasks.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {milestone.sub_tasks.filter((st) => st.is_completed).length} of{' '}
+                      {milestone.sub_tasks.length} tasks done
+                    </p>
+                  )}
+                </div>
+
+                {/* Progress indicator */}
+                {!milestone.is_completed && (
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-16 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full bg-primary/60 rounded-full"
+                        style={{ width: `${milestone.progress}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground w-8">
+                      {milestone.progress}%
+                    </span>
+                  </div>
+                )}
+
+                {/* Completed date */}
+                {milestone.is_completed && milestone.completed_at && (
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(milestone.completed_at).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+
+              {/* Sub-tasks */}
+              <AnimatePresence>
+                {isExpanded && subTaskDefs.length > 0 && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden bg-muted/20"
+                  >
+                    <div className="py-2 px-4 pl-16 space-y-1">
+                      {subTaskDefs.map((def: SubTaskDefinition) => {
+                        const subTask = milestone.sub_tasks.find(
+                          (st) => st.sub_task_id === def.id
+                        );
+                        const isCompleted = subTask?.is_completed || false;
+
+                        return (
+                          <div
+                            key={def.id}
+                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer"
+                            onClick={() => {
+                              if (subTask) {
+                                handleToggleSubTask(subTask.id, isCompleted);
+                              }
+                            }}
+                          >
+                            <button
+                              className={`flex h-5 w-5 items-center justify-center rounded border transition-colors ${
+                                isCompleted
+                                  ? 'bg-primary border-primary text-primary-foreground'
+                                  : 'border-muted-foreground/30 hover:border-primary'
+                              }`}
+                              disabled={toggleSubTask.isPending}
+                            >
+                              {isCompleted && <Check className="h-3 w-3" />}
+                            </button>
+                            <div className="flex-1">
+                              <p
+                                className={`text-sm ${
+                                  isCompleted
+                                    ? 'text-muted-foreground line-through'
+                                    : 'text-foreground'
+                                }`}
+                              >
+                                {def.label}
+                              </p>
+                              {def.description && (
+                                <p className="text-xs text-muted-foreground">
+                                  {def.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}

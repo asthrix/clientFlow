@@ -11,13 +11,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { pageVariants, fadeUpVariants, cardVariants, modalVariants, overlayVariants } from '@/lib/animations';
 import { PageHeader, StatusBadge, EmptyState, CardSkeleton } from '@/components/shared';
 import { CredentialCard } from '@/components/credentials';
+import { MilestoneTracker, ProjectForm } from '@/components/projects';
 import { useProject } from '@/hooks/queries/useProjects';
 import { useCredentialsByProject } from '@/hooks/queries/useCredentials';
-import { useDeleteProject, useUpdateProjectProgress } from '@/hooks/mutations/useProjectMutations';
+import { useDeleteProject, useUpdateProject } from '@/hooks/mutations/useProjectMutations';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import type { ProjectStatus, DeliveryStatus, PaymentStatus } from '@/types';
+import type { ProjectStatus, DeliveryStatus, PaymentStatus, UpdateProjectDTO } from '@/types';
+import { type ProjectFormData, transformProjectFormToDTO } from '@/lib/validations/project';
 import {
   ArrowLeft,
   Calendar,
@@ -49,11 +50,12 @@ export default function ProjectDetailPage() {
 
   // Mutations
   const deleteProject = useDeleteProject();
-  const updateProgress = useUpdateProjectProgress();
+  const updateProject = useUpdateProject();
 
   // State
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [progressValue, setProgressValue] = useState<number | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Status configs
   const statusConfig: Record<ProjectStatus, { variant: 'success' | 'warning' | 'error' | 'info' | 'default'; label: string }> = {
@@ -87,12 +89,19 @@ export default function ProjectDetailPage() {
     router.push('/projects');
   }, [projectId, deleteProject, router]);
 
-  const handleProgressUpdate = useCallback(async () => {
-    if (progressValue !== null) {
-      await updateProgress.mutateAsync({ id: projectId, progress: progressValue });
-      setProgressValue(null);
+  const handleEditSubmit = useCallback(async (data: ProjectFormData) => {
+    setFormError(null);
+    const dtoData = transformProjectFormToDTO(data);
+    try {
+      await updateProject.mutateAsync({
+        id: projectId,
+        ...dtoData,
+      } as unknown as UpdateProjectDTO);
+      setEditModalOpen(false);
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'An error occurred');
     }
-  }, [projectId, progressValue, updateProgress]);
+  }, [projectId, updateProject]);
 
   // Format currency
   const formatCurrency = (amount: number | undefined, currency: string = 'USD') => {
@@ -181,11 +190,13 @@ export default function ProjectDetailPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/projects/${projectId}/edit`}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </Link>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setEditModalOpen(true)}
+          >
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit
           </Button>
           <Button 
             variant="destructive" 
@@ -209,43 +220,8 @@ export default function ProjectDetailPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main Info */}
         <motion.div variants={fadeUpVariants} className="lg:col-span-2 space-y-6">
-          {/* Progress */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-foreground">Progress</h2>
-              <span className="text-2xl font-bold">{project.progress_percentage || 0}%</span>
-            </div>
-            <div className="h-3 w-full rounded-full bg-muted overflow-hidden mb-4">
-              <motion.div
-                className="h-full bg-primary rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${project.progress_percentage || 0}%` }}
-                transition={{ duration: 0.8, ease: 'easeOut' }}
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                min={0}
-                max={100}
-                placeholder={String(project.progress_percentage || 0)}
-                value={progressValue ?? ''}
-                onChange={(e) => setProgressValue(Number(e.target.value))}
-                className="w-24"
-              />
-              <Button 
-                size="sm" 
-                onClick={handleProgressUpdate}
-                disabled={progressValue === null || updateProgress.isPending}
-              >
-                {updateProgress.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <TrendingUp className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-          </div>
+          {/* Progress - Milestone Tracker */}
+          <MilestoneTracker projectId={projectId} />
 
           {/* Description */}
           {project.description && (
@@ -392,6 +368,49 @@ export default function ProjectDetailPage() {
           )}
         </motion.div>
       </div>
+
+      {/* Edit Modal */}
+      <AnimatePresence>
+        {editModalOpen && project && (
+          <>
+            <motion.div
+              variants={overlayVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              onClick={() => setEditModalOpen(false)}
+              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+            />
+            <motion.div
+              variants={modalVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="fixed inset-x-4 top-[2%] z-50 mx-auto max-w-3xl max-h-[96vh] overflow-auto rounded-2xl border border-border bg-card shadow-2xl sm:inset-x-auto"
+            >
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 backdrop-blur px-6 py-4">
+                <h2 className="text-xl font-semibold text-foreground">Edit Project</h2>
+                <button
+                  onClick={() => setEditModalOpen(false)}
+                  className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                >
+                  <AlertTriangle className="h-5 w-5 hidden" />
+                  ×
+                </button>
+              </div>
+              <div className="p-6">
+                <ProjectForm
+                  project={project}
+                  onSubmit={handleEditSubmit}
+                  onCancel={() => setEditModalOpen(false)}
+                  isLoading={updateProject.isPending}
+                  error={formError}
+                />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Delete Dialog */}
       <AnimatePresence>

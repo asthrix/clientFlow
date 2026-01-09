@@ -12,3 +12,5 @@ export * from './project.types';
 export * from './credential.types';
 export * from './payment.types';
 export * from './user.types';
+export * from './milestone.types';
+
