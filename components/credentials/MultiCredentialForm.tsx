@@ -11,7 +11,8 @@ import { fadeUpVariants, shakeVariants } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { CredentialType, CreateCredentialDTO } from '@/types';
+import { useCreateMultipleCredentials } from '@/hooks/mutations/useCreateMultipleCredentials';
+import type { CredentialType } from '@/types';
 import {
   Key,
   User,
@@ -39,10 +40,8 @@ interface CredentialEntry {
 
 interface MultiCredentialFormProps {
   projectId: string;
-  onSubmit: (credentials: Omit<CreateCredentialDTO, 'project_id'>[]) => Promise<void>;
+  onSuccess?: () => void;
   onCancel?: () => void;
-  isLoading?: boolean;
-  error?: string | null;
   minCredentials?: number;
 }
 
@@ -75,15 +74,16 @@ const createEmptyEntry = (): CredentialEntry => ({
 
 export function MultiCredentialForm({
   projectId,
-  onSubmit,
+  onSuccess,
   onCancel,
-  isLoading = false,
-  error,
   minCredentials = 1,
 }: MultiCredentialFormProps) {
   const [entries, setEntries] = useState<CredentialEntry[]>([createEmptyEntry()]);
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
   const [visibleApiKeys, setVisibleApiKeys] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
+
+  const createCredentials = useCreateMultipleCredentials();
 
   // Add new credential entry
   const addEntry = () => {
@@ -143,27 +143,38 @@ export function MultiCredentialForm({
     return entries.every((e) => e.service_name.trim() !== '');
   };
 
+  const isLoading = createCredentials.isPending;
+
   // Handle submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
     if (!validateEntries()) {
       return;
     }
 
     // Transform entries to DTOs
-    const credentials: Omit<CreateCredentialDTO, 'project_id'>[] = entries
-      .filter((e) => e.service_name.trim() !== '')
-      .map((e) => ({
-        credential_type: e.credential_type,
-        service_name: e.service_name,
-        username: e.username || undefined,
-        password: e.password || undefined,
-        api_key: e.api_key || undefined,
-        expiry_date: e.expiry_date || undefined,
+    const credentialData = entries
+      .filter((entry) => entry.service_name.trim() !== '')
+      .map((entry) => ({
+        credential_type: entry.credential_type,
+        service_name: entry.service_name,
+        username: entry.username || undefined,
+        password: entry.password || undefined,
+        api_key: entry.api_key || undefined,
+        expiry_date: entry.expiry_date || undefined,
       }));
 
-    await onSubmit(credentials);
+    try {
+      await createCredentials.mutateAsync({
+        projectId,
+        credentials: credentialData,
+      });
+      onSuccess?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create credentials');
+    }
   };
 
   return (

@@ -10,7 +10,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { pageVariants, fadeUpVariants, cardVariants, modalVariants, overlayVariants } from '@/lib/animations';
 import { PageHeader, StatusBadge, EmptyState, CardSkeleton } from '@/components/shared';
-import { CredentialCard } from '@/components/credentials';
+import { CredentialCard, MultiCredentialForm } from '@/components/credentials';
 import { MilestoneTracker, ProjectForm } from '@/components/projects';
 import { useProject } from '@/hooks/queries/useProjects';
 import { useCredentialsByProject } from '@/hooks/queries/useCredentials';
@@ -55,6 +55,7 @@ export default function ProjectDetailPage() {
   // State
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [addCredentialsModalOpen, setAddCredentialsModalOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   // Status configs
@@ -235,11 +236,9 @@ export default function ProjectDetailPage() {
           <div className="rounded-xl border border-border bg-card p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-foreground">Credentials</h2>
-              <Button size="sm" asChild>
-                <Link href={`/credentials?projectId=${projectId}`}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add
-                </Link>
+              <Button size="sm" onClick={() => setAddCredentialsModalOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add
               </Button>
             </div>
 
@@ -368,6 +367,46 @@ export default function ProjectDetailPage() {
           )}
         </motion.div>
       </div>
+
+      {/* Add Credentials Modal */}
+      <AnimatePresence>
+        {addCredentialsModalOpen && (
+          <>
+            <motion.div
+              variants={overlayVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              onClick={() => setAddCredentialsModalOpen(false)}
+              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+            />
+            <motion.div
+              variants={modalVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="fixed inset-x-4 top-[3%] z-50 mx-auto max-w-2xl max-h-[94vh] overflow-auto rounded-2xl border border-border bg-card shadow-2xl sm:inset-x-auto"
+            >
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 backdrop-blur px-6 py-4">
+                <h2 className="text-xl font-semibold text-foreground">Add Credentials</h2>
+                <button
+                  onClick={() => setAddCredentialsModalOpen(false)}
+                  className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="p-6">
+                <MultiCredentialForm
+                  projectId={projectId}
+                  onSuccess={() => setAddCredentialsModalOpen(false)}
+                  onCancel={() => setAddCredentialsModalOpen(false)}
+                />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Edit Modal */}
       <AnimatePresence>
