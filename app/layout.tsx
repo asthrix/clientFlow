@@ -3,29 +3,37 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Providers } from "@/components/Providers";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
+   subsets: ["latin"],
+   variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
-  title: "ClientFlow CRM | Freelance Developer Client Management",
-  description: "A comprehensive client and project management system for freelance web developers. Manage clients, projects, credentials, payments, and track analytics.",
-  keywords: ["CRM", "freelance", "client management", "project management", "web developer"],
+   title: "ClientFlow CRM | Freelance Developer Client Management",
+   description:
+      "A comprehensive client and project management system for freelance web developers. Manage clients, projects, credentials, payments, and track analytics.",
+   keywords: [
+      "CRM",
+      "freelance",
+      "client management",
+      "project management",
+      "web developer",
+   ],
 };
 
 export default function RootLayout({
-  children,
+   children,
 }: Readonly<{
-  children: React.ReactNode;
+   children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
+   return (
+      <html lang='en' suppressHydrationWarning>
+         <head>
+            <script
+               dangerouslySetInnerHTML={{
+                  __html: `
               try {
                 const theme = localStorage.getItem('theme');
                 const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -36,23 +44,22 @@ export default function RootLayout({
                 }
               } catch (e) {}
             `,
-          }}
-        />
-      </head>
-      <body className={`${inter.variable} font-sans antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <Providers>
-            {children}
-          </Providers>
-        </ThemeProvider>
-      </body>
-    </html>
-  );
+               }}
+            />
+         </head>
+         <body className={`${inter.variable} font-sans antialiased`}>
+            <ThemeProvider
+               attribute='class'
+               defaultTheme='system'
+               enableSystem
+               disableTransitionOnChange
+            >
+               <Providers>
+                  {children}
+                  <Analytics />
+               </Providers>
+            </ThemeProvider>
+         </body>
+      </html>
+   );
 }
-
-
